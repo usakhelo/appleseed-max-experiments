@@ -571,7 +571,7 @@ void AppleseedDisneyMtl::Update(TimeValue t, Interval& valid)
 void AppleseedDisneyMtl::Reset()
 {
     g_appleseed_disneymtl_classdesc.Reset(this);
-
+    DeleteReference(ParamBlockRefDisneyMtl);
     m_params_validity.SetEmpty();
 }
 

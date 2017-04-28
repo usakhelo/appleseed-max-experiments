@@ -452,6 +452,8 @@ namespace
         if (mtl)
         {
             // The instance has a material.
+            if (type == RenderType::MaterialPreview) //workaround to make SME update materials
+                mtl->Update(time, FOREVER);
             const int submtlcount = mtl->NumSubMtls();
             if (submtlcount > 0)
             {
