@@ -30,6 +30,7 @@
 #include "projectbuilder.h"
 
 // appleseed-max headers.
+#include "appleseedenvmap.h"
 #include "appleseedobjpropsmod/appleseedobjpropsmod.h"
 #include "appleseedrenderer/maxsceneentities.h"
 #include "appleseedrenderer/renderersettings.h"
@@ -904,69 +905,92 @@ namespace
     {
         if (rend_params.envMap != nullptr)
         {
-            const size_t TextureWidth = 512;
-            const size_t TextureHeight = 512;
-
-            // Render the environment map into a Max bitmap.
-            BitmapInfo bi;
-            bi.SetWidth(TextureWidth);
-            bi.SetHeight(TextureHeight);
-            bi.SetType(BMM_FLOAT_RGBA_32);
-            Bitmap* envmap_bitmap = TheManager->Create(&bi);
-            rend_params.envMap->RenderBitmap(time, envmap_bitmap, 1.0f, TRUE);
-
-            // Build an appleseed image from the Max bitmap.
-            asf::auto_release_ptr<asf::Image> envmap_image(
-                new asf::Image(
-                    TextureWidth, TextureHeight,    // image dimensions
-                    TextureWidth, TextureHeight,    // tile dimensions
-                    4,
-                    asf::PixelFormatFloat));
-            for (size_t y = 0; y < TextureHeight; ++y)
+            //if type of texture is appleseed environment
+            //then add sky edf according to env. map param
+            //update edf params with env map params
+            if (rend_params.envMap->IsSubClassOf(Class_ID(0x52848b4a, 0x5e6cb361)))
             {
-                for (size_t x = 0; x < TextureWidth; ++x)
+                auto m_name = make_unique_name(scene.environment_edfs(), wide_to_utf8(rend_params.envMap->GetName()) + "_map");
+                auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
+                if (appleseed_envmap)
                 {
-                    BMM_Color_fl c;
-                    envmap_bitmap->GetLinearPixels(
-                        static_cast<int>(x),
-                        static_cast<int>(y),
-                        1,
-                        &c);
-                    envmap_image->set_pixel(x, y, c);
+                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(m_name.c_str()));
+
+                    scene.environment_shaders().insert(
+                    asr::EDFEnvironmentShaderFactory::static_create(
+                        "environment_shader",
+                        asr::ParamArray()
+                            .insert("environment_edf", m_name.c_str())
+                            .insert("alpha_value", settings.m_background_alpha)));
                 }
             }
+            else
+            {
+                //proceed with rendering env map and applying it to background shader
+                const size_t TextureWidth = 512;
+                const size_t TextureHeight = 512;
 
-            // Destroy the Max bitmap.
-            envmap_bitmap->DeleteThis();
+                // Render the environment map into a Max bitmap.
+                BitmapInfo bi;
+                bi.SetWidth(TextureWidth);
+                bi.SetHeight(TextureHeight);
+                bi.SetType(BMM_FLOAT_RGBA_32);
+                Bitmap* envmap_bitmap = TheManager->Create(&bi);
+                rend_params.envMap->RenderBitmap(time, envmap_bitmap, 1.0f, TRUE);
 
-            scene.textures().insert(
-                asf::auto_release_ptr<asr::Texture>(
-                    asr::MemoryTexture2dFactory::static_create(
-                        "environment_map",
+                // Build an appleseed image from the Max bitmap.
+                asf::auto_release_ptr<asf::Image> envmap_image(
+                    new asf::Image(
+                        TextureWidth, TextureHeight,    // image dimensions
+                        TextureWidth, TextureHeight,    // tile dimensions
+                        4,
+                        asf::PixelFormatFloat));
+                for (size_t y = 0; y < TextureHeight; ++y)
+                {
+                    for (size_t x = 0; x < TextureWidth; ++x)
+                    {
+                        BMM_Color_fl c;
+                        envmap_bitmap->GetLinearPixels(
+                            static_cast<int>(x),
+                            static_cast<int>(y),
+                            1,
+                            &c);
+                        envmap_image->set_pixel(x, y, c);
+                    }
+                }
+
+                // Destroy the Max bitmap.
+                envmap_bitmap->DeleteThis();
+
+                scene.textures().insert(
+                    asf::auto_release_ptr<asr::Texture>(
+                        asr::MemoryTexture2dFactory::static_create(
+                            "environment_map",
+                            asr::ParamArray()
+                                .insert("color_space", "linear_rgb"),
+                            envmap_image)));
+
+                scene.texture_instances().insert(
+                    asf::auto_release_ptr<asr::TextureInstance>(
+                        asr::TextureInstanceFactory::create(
+                            "environment_map_inst",
+                            asr::ParamArray(),
+                            "environment_map")));
+
+                scene.environment_edfs().insert(
+                    asf::auto_release_ptr<asr::EnvironmentEDF>(
+                        asr::LatLongMapEnvironmentEDFFactory::static_create(
+                            "environment_edf",
+                            asr::ParamArray()
+                                .insert("radiance", "environment_map_inst"))));
+
+                scene.environment_shaders().insert(
+                    asr::BackgroundEnvironmentShaderFactory::static_create(
+                        "environment_shader",
                         asr::ParamArray()
-                            .insert("color_space", "linear_rgb"),
-                        envmap_image)));
-
-            scene.texture_instances().insert(
-                asf::auto_release_ptr<asr::TextureInstance>(
-                    asr::TextureInstanceFactory::create(
-                        "environment_map_inst",
-                        asr::ParamArray(),
-                        "environment_map")));
-
-            scene.environment_edfs().insert(
-                asf::auto_release_ptr<asr::EnvironmentEDF>(
-                    asr::LatLongMapEnvironmentEDFFactory::static_create(
-                        "environment_edf",
-                        asr::ParamArray()
-                            .insert("radiance", "environment_map_inst"))));
-
-            scene.environment_shaders().insert(
-                asr::BackgroundEnvironmentShaderFactory::static_create(
-                    "environment_shader",
-                    asr::ParamArray()
-                        .insert("color", "environment_map_inst")
-                        .insert("alpha", settings.m_background_alpha)));
+                            .insert("color", "environment_map_inst")
+                            .insert("alpha", settings.m_background_alpha)));
+            }
 
             scene.set_environment(
                 asr::EnvironmentFactory::create(
