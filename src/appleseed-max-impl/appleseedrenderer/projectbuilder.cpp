@@ -30,7 +30,7 @@
 #include "projectbuilder.h"
 
 // appleseed-max headers.
-#include "appleseedenvmap.h"
+#include "appleseedenvmap/appleseedenvmap.h"
 #include "appleseedobjpropsmod/appleseedobjpropsmod.h"
 #include "appleseedrenderer/maxsceneentities.h"
 #include "appleseedrenderer/renderersettings.h"
@@ -905,22 +905,21 @@ namespace
     {
         if (rend_params.envMap != nullptr)
         {
-            //if type of texture is appleseed environment
-            //then add sky edf according to env. map param
-            //update edf params with env map params
+            std::string env_edf_name;
+            std::string env_shader_name("environment_shader");
             if (rend_params.envMap->IsSubClassOf(Class_ID(0x52848b4a, 0x5e6cb361)))
             {
-                auto m_name = make_unique_name(scene.environment_edfs(), wide_to_utf8(rend_params.envMap->GetName()) + "_map");
+                env_edf_name = make_unique_name(scene.environment_edfs(), wide_to_utf8(rend_params.envMap->GetName()) + "_map");
                 auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
                 if (appleseed_envmap)
                 {
-                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(m_name.c_str()));
+                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(env_edf_name.c_str()));
 
                     scene.environment_shaders().insert(
                     asr::EDFEnvironmentShaderFactory::static_create(
-                        "environment_shader",
+                        env_shader_name.c_str(),
                         asr::ParamArray()
-                            .insert("environment_edf", m_name.c_str())
+                            .insert("environment_edf", env_edf_name.c_str())
                             .insert("alpha_value", settings.m_background_alpha)));
                 }
             }
@@ -986,7 +985,7 @@ namespace
 
                 scene.environment_shaders().insert(
                     asr::BackgroundEnvironmentShaderFactory::static_create(
-                        "environment_shader",
+                        env_shader_name.c_str(),
                         asr::ParamArray()
                             .insert("color", "environment_map_inst")
                             .insert("alpha", settings.m_background_alpha)));
@@ -996,8 +995,8 @@ namespace
                 asr::EnvironmentFactory::create(
                     "environment",
                     asr::ParamArray()
-                        .insert("environment_edf", "environment_edf")
-                        .insert("environment_shader", "environment_shader")));
+                        .insert("environment_edf", env_edf_name.c_str())
+                        .insert("environment_shader", env_shader_name.c_str())));
         }
         else
         {

@@ -85,8 +85,8 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>C:\Soft\3ds Max 2016 SDK\maxsdk\lib\x64\Release;$(SolutionDir)..\..\appleseed\sandbox\lib\v110\$(ConfigurationName);$(SolutionDir)..\..\appleseed-deps\stage\vc11;$(SolutionDir)..\..\boost_1_55_0\stage\lib;$(SolutionDir)..\..\appleseed-env-maps\build\appleseedenvmap\x64\Hybrid;$(SolutionDir)..\..\appleseed-env-maps\appleseedenvmap</AdditionalLibraryDirectories>
-      <AdditionalDependencies>wininet.lib;bmm.lib;core.lib;geom.lib;maxutil.lib;mesh.lib;Paramblk2.lib;Pathcch.lib;appleseed.lib;ilmbase-debug\lib\Half.lib;appleseedenvmap.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Soft\3ds Max 2016 SDK\maxsdk\lib\x64\Release;$(SolutionDir)..\..\appleseed\sandbox\lib\v110\$(ConfigurationName);$(SolutionDir)..\..\appleseed-deps\stage\vc11;$(SolutionDir)..\..\boost_1_55_0\stage\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>wininet.lib;bmm.lib;core.lib;geom.lib;maxutil.lib;mesh.lib;Paramblk2.lib;Pathcch.lib;appleseed.lib;ilmbase-debug\lib\Half.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <DelayLoadDLLs>
       </DelayLoadDLLs>
@@ -98,8 +98,8 @@ copy /Y "$(TargetPath)" "$(SolutionDir)..\bin\appleseed-max2016\$(Platform)\$(Co
 copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\bin\appleseed-max2016\$(Platform)\$(Configuration)\"
 
 copy /Y "$(TargetPath)" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
-copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
-copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.pdb" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"</Command>
+copy /Y "$(SolutionDir)..\..\appleseed\build\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
+copy /Y "$(SolutionDir)..\..\appleseed\build\src\appleseed\$(ConfigurationName)\appleseed.pdb" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -183,6 +183,7 @@ copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationN
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="appleseeddisneymtl\appleseeddisneymtl.cpp" />
+    <ClCompile Include="appleseedenvmap\appleseedenvmap.cpp" />
     <ClCompile Include="appleseedglassmtl\appleseedglassmtl.cpp" />
     <ClCompile Include="appleseedobjpropsmod\appleseedobjpropsmod.cpp" />
     <ClCompile Include="iappleseedmtl.cpp" />
@@ -203,6 +204,8 @@ copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationN
     <ClCompile Include="version.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="appleseedenvmap\appleseedenvmap.h" />
+    <ClInclude Include="appleseedenvmap\resource.h" />
     <ClInclude Include="appleseedobjpropsmod\appleseedobjpropsmod.h" />
     <ClInclude Include="appleseedobjpropsmod\resource.h" />
     <ClInclude Include="bump\bumpparammapdlgproc.h" />
@@ -236,6 +239,7 @@ copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationN
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="appleseedenvmap\appleseedenvmap.rc" />
     <ResourceCompile Include="appleseedobjpropsmod\appleseedobjpropsmod.rc" />
     <ResourceCompile Include="bump\bump.rc" />
     <ResourceCompile Include="appleseeddisneymtl\appleseeddisneymtl.rc" />
