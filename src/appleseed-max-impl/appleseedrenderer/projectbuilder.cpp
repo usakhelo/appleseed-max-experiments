@@ -905,25 +905,40 @@ namespace
     {
         if (rend_params.envMap != nullptr)
         {
-            std::string env_edf_name;
+            std::string env_edf_name("environment_edf");
             std::string env_shader_name("environment_shader");
-            if (rend_params.envMap->IsSubClassOf(Class_ID(0x52848b4a, 0x5e6cb361)))
-            {
-                env_edf_name = make_unique_name(scene.environment_edfs(), wide_to_utf8(rend_params.envMap->GetName()) + "_map");
-                auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
-                if (appleseed_envmap)
-                {
-                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(env_edf_name.c_str()));
+            std::string env_tex_name("environment_map");
+            std::string env_tex_instance_name("environment_map_inst");
 
-                    scene.environment_shaders().insert(
-                    asr::EDFEnvironmentShaderFactory::static_create(
-                        env_shader_name.c_str(),
-                        asr::ParamArray()
-                            .insert("environment_edf", env_edf_name.c_str())
-                            .insert("alpha_value", settings.m_background_alpha)));
+            //insert textures
+            //in case of bitmap env map
+            if (rend_params.envMap->IsSubClassOf(Class_ID(BMTEX_CLASS_ID, 0)))
+            {
+                auto bitmap_envmap = static_cast<BitmapTex*>(rend_params.envMap);
+                if (bitmap_envmap)
+                {
+				    auto tex_filename = wide_to_utf8(bitmap_envmap->GetMapName());
+                    env_tex_instance_name = make_unique_name(scene.texture_instances(), tex_filename + "_inst");
+
+                    scene.textures().insert(
+                        asf::auto_release_ptr<asr::Texture>(
+                            asr::DiskTexture2dFactory::static_create(
+                                env_tex_name.c_str(),
+                                asr::ParamArray()
+                                    .insert("color_space", "linear_rgb") //todo: exr and hdr should be linear, others should be srgb
+                                    .insert("filename", tex_filename),
+                                    asf::SearchPaths())));
+
+                    scene.texture_instances().insert(
+                        asf::auto_release_ptr<asr::TextureInstance>(
+                            asr::TextureInstanceFactory::create(
+                                env_tex_instance_name.c_str(),
+                                asr::ParamArray(),
+                                env_tex_name.c_str())));
                 }
             }
-            else
+            //in case of unknown class
+            else if (!rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()))
             {
                 //proceed with rendering env map and applying it to background shader
                 const size_t TextureWidth = 512;
@@ -961,10 +976,13 @@ namespace
                 // Destroy the Max bitmap.
                 envmap_bitmap->DeleteThis();
 
+                env_tex_name = make_unique_name(scene.textures(), "environment_map");
+                env_tex_instance_name = make_unique_name(scene.texture_instances(), "environment_map_inst");
+
                 scene.textures().insert(
                     asf::auto_release_ptr<asr::Texture>(
                         asr::MemoryTexture2dFactory::static_create(
-                            "environment_map",
+                            env_tex_name.c_str(),
                             asr::ParamArray()
                                 .insert("color_space", "linear_rgb"),
                             envmap_image)));
@@ -972,31 +990,72 @@ namespace
                 scene.texture_instances().insert(
                     asf::auto_release_ptr<asr::TextureInstance>(
                         asr::TextureInstanceFactory::create(
-                            "environment_map_inst",
+                            env_tex_instance_name.c_str(),
                             asr::ParamArray(),
-                            "environment_map")));
+                            env_tex_name.c_str())));
+            }
 
+            //insert EDF
+            //in case of appleseed envmap
+            if (rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()))
+            {
+                auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
+                if (appleseed_envmap)
+                {
+                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(env_edf_name.c_str()));
+                }
+            }
+            //in case of bitmap envmap and unknown class
+            else
+            {
+                //todo: translate UVoffset to lat/long parameters
                 scene.environment_edfs().insert(
                     asf::auto_release_ptr<asr::EnvironmentEDF>(
                         asr::LatLongMapEnvironmentEDFFactory::static_create(
-                            "environment_edf",
+                            env_edf_name.c_str(),
                             asr::ParamArray()
-                                .insert("radiance", "environment_map_inst"))));
+                                .insert("radiance", env_tex_instance_name.c_str()))));
+            }
 
+            //insert shader
+            //in case of appleseed envmap and bitmap envmap
+            if (rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()) || rend_params.envMap->IsSubClassOf(Class_ID(BMTEX_CLASS_ID, 0)))
+            {
+                scene.environment_shaders().insert(
+                asr::EDFEnvironmentShaderFactory::static_create(
+                    env_shader_name.c_str(),
+                    asr::ParamArray()
+                        .insert("environment_edf", env_edf_name.c_str())
+                        .insert("alpha_value", settings.m_background_alpha)));
+            }
+            //in case of unknown class
+            else
+            {
                 scene.environment_shaders().insert(
                     asr::BackgroundEnvironmentShaderFactory::static_create(
                         env_shader_name.c_str(),
                         asr::ParamArray()
-                            .insert("color", "environment_map_inst")
+                            .insert("color", env_tex_instance_name.c_str())
                             .insert("alpha", settings.m_background_alpha)));
             }
 
-            scene.set_environment(
-                asr::EnvironmentFactory::create(
-                    "environment",
-                    asr::ParamArray()
-                        .insert("environment_edf", env_edf_name.c_str())
-                        .insert("environment_shader", env_shader_name.c_str())));
+            if (settings.m_background_emits_light)
+            {
+                scene.set_environment(
+                    asr::EnvironmentFactory::create(
+                        "environment",
+                        asr::ParamArray()
+                            .insert("environment_edf", env_edf_name.c_str())
+                            .insert("environment_shader", env_shader_name.c_str())));
+            }
+            else
+            {
+                scene.set_environment(
+                    asr::EnvironmentFactory::create(
+                        "environment",
+                        asr::ParamArray()
+                            .insert("environment_shader", env_shader_name.c_str())));
+            }
         }
         else
         {

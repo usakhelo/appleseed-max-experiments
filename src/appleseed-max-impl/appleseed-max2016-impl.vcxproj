@@ -77,7 +77,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;BOOST_FILESYSTEM_VERSION=3;BOOST_FILESYSTEM_NO_DEPRECATED;APPLESEED_WITH_OIIO;OIIO_STATIC_BUILD;APPLESEED_WITH_OSL;OSL_STATIC_LIBRARY;APPLESEED_WITH_DISNEY_MATERIAL;APPLESEED_WITH_NORMALIZED_DIFFUSION_BSSRDF;XERCES_STATIC_LIBRARY;BOOST_PYTHON_STATIC_LIB;APPLESEED_X86;APPLESEED_USE_SSE;DEBUG;APPLESEED_ENABLE_IMATH_INTEROP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);C:\Soft\3ds Max 2016 SDK\maxsdk\include;$(SolutionDir)..\..\boost_1_55_0;$(SolutionDir)..\..\appleseed\src\appleseed;$(SolutionDir)..\..\appleseed-deps\stage\vc11\ilmbase-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\openexr-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\oiio-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\osl-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\SeExpr-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\SeExpr-release\include;$(SolutionDir)..\..\appleseed-env-maps\appleseedenvmap</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);E:\tools\3ds Max 2016 SDK\include;$(SolutionDir)..\..\boost_1_55_0;$(SolutionDir)..\..\appleseed\src\appleseed;$(SolutionDir)..\..\appleseed-deps\stage\vc11\ilmbase-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\openexr-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\oiio-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\osl-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\SeExpr-debug\include;$(SolutionDir)..\..\appleseed-deps\stage\vc11\SeExpr-release\include;$(SolutionDir)..\..\appleseed-env-maps\appleseedenvmap</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <StringPooling>true</StringPooling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -85,7 +85,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>C:\Soft\3ds Max 2016 SDK\maxsdk\lib\x64\Release;$(SolutionDir)..\..\appleseed\sandbox\lib\v110\$(ConfigurationName);$(SolutionDir)..\..\appleseed-deps\stage\vc11;$(SolutionDir)..\..\boost_1_55_0\stage\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\tools\3ds Max 2016 SDK\lib\x64\Release;$(SolutionDir)..\..\appleseed\sandbox\lib\v110\$(ConfigurationName);$(SolutionDir)..\..\appleseed-deps\stage\vc11;$(SolutionDir)..\..\boost_1_55_0\stage\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>wininet.lib;bmm.lib;core.lib;geom.lib;maxutil.lib;mesh.lib;Paramblk2.lib;Pathcch.lib;appleseed.lib;ilmbase-debug\lib\Half.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <DelayLoadDLLs>
@@ -98,8 +98,8 @@ copy /Y "$(TargetPath)" "$(SolutionDir)..\bin\appleseed-max2016\$(Platform)\$(Co
 copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\bin\appleseed-max2016\$(Platform)\$(Configuration)\"
 
 copy /Y "$(TargetPath)" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
-copy /Y "$(SolutionDir)..\..\appleseed\build\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
-copy /Y "$(SolutionDir)..\..\appleseed\build\src\appleseed\$(ConfigurationName)\appleseed.pdb" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"</Command>
+copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.dll" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"
+copy /Y "$(SolutionDir)..\..\appleseed\build\vc11\src\appleseed\$(ConfigurationName)\appleseed.pdb" "$(SolutionDir)..\..\appleseed-max2016-plugin-folder\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

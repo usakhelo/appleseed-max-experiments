@@ -34,8 +34,7 @@ namespace
         ParamIdLuminGamma           = 7,
         ParamIdSatMultiplier        = 8,
         ParamIdHorizonShift         = 10,
-        ParamIdGroundAlbedo         = 11,
-        ParamIdSkyType              = 12
+        ParamIdGroundAlbedo         = 11
     };
 
     enum TexmapId
@@ -74,12 +73,12 @@ namespace
         // params
         ParamIdSunTheta, _T("sun_theta"), TYPE_FLOAT, P_ANIMATABLE, IDS_THETA,
             p_default, 45.0f,
-            p_range, 0.0f, 90.0f,
+            p_range, 0.0f, 180.0f,
             p_ui, TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_THETA, IDC_SPIN_THETA, 0.01f,
         p_end,
 
         ParamIdSunPhi, _T("sun_phi"), TYPE_FLOAT, P_ANIMATABLE, IDS_PHI,
-            p_default, 90.0f,
+            p_default, 0.0f,
             p_range, 0.0f, 360.0f,
             p_ui, TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_PHI, IDC_SPIN_PHI, 0.01f,
         p_end,
@@ -136,13 +135,6 @@ namespace
             p_ui, TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_GROUND_ALBEDO, IDC_SPIN_GROUND_ALBEDO, 0.01f,
         p_end,
 
-        ParamIdSkyType, _T("sky_type"), TYPE_INT, 0, IDS_SKY_TYPE,
-            p_ui, TYPE_INT_COMBOBOX, IDC_COMBO_SKY_TYPE,
-            2, IDS_SKY_TYPE_1, IDS_SKY_TYPE_2,
-            p_vals, 0, 1,
-            p_default, 0,
-        p_end,
-
         p_end
     );
 }
@@ -165,7 +157,6 @@ AppleseedEnvMap::AppleseedEnvMap()
     , m_sat_multiplier(1.0f)
     , m_horizon_shift(0.0f)
     , m_ground_albedo(0.3f)
-    , m_sky_type(0)
 {
     g_appleseed_appleseedenvmap_classdesc.MakeAutoParamBlocks(this);
     Reset();
@@ -350,8 +341,6 @@ void AppleseedEnvMap::Update(TimeValue t, Interval& valid)
         m_pblock->GetValue(ParamIdHorizonShift, t, m_horizon_shift, m_params_validity);
         m_pblock->GetValue(ParamIdGroundAlbedo, t, m_ground_albedo, m_params_validity);
 
-        m_pblock->GetValue(ParamIdSkyType, t, m_sky_type, m_params_validity);
-        
         NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
     }
 

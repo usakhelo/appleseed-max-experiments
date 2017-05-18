@@ -13,7 +13,6 @@
 #include <maxtypes.h>
 #include <stdmat.h>
 #include <imtl.h>
-#include <macrorec.h>
 #include <IMaterialBrowserEntryInfo.h>
 #undef base_type
 
@@ -94,7 +93,6 @@ private:
     float m_sat_multiplier;
     float m_horizon_shift;
     float m_ground_albedo;
-    int m_sky_type;
 };
 
 
