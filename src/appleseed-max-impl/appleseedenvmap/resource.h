@@ -21,6 +21,7 @@
 #define IDS_SAT_MULITPLIER              8016
 #define IDS_HORIZON_SHIFT               8017
 #define IDS_GROUND_ALBEDO               8018
+#define IDS_SUN_NODE_ON                 8019
 #define IDC_CLOSEBUTTON                 8020
 #define IDC_DOSTUFF                     8020
 #define IDC_PICK_SUN                    8022
@@ -29,6 +30,7 @@
 #define IDC_PICK_TURB_TEXTURE           8024
 #define IDC_COMBO_SKY_TYPE              8025
 #define IDC_TURB_TEX_ON                 8026
+#define IDC_SUN_NODE_ON                 8027
 #define IDD_ENVMAP_PANEL                8101
 #define IDC_COLOR                       8456
 #define IDC_EDIT_THETA                  8490

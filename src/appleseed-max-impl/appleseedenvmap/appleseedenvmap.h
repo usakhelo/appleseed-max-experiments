@@ -102,13 +102,15 @@ class AppleseedEnvMap
 
     virtual foundation::auto_release_ptr<renderer::EnvironmentEDF> create_envmap(const char* name);
 
+    IParamBlock2*   m_pblock;          // ref 0
+
   protected:
     virtual void SetReference(int i, RefTargetHandle rtarg) override;
 
   private:
-    IParamBlock2*   m_pblock;          // ref 0
     Interval        m_params_validity;
     INode*          m_sun_node;
+    BOOL            m_sun_node_on;
     float           m_sun_theta;
     float           m_sun_phi;
     float           m_turbidity;
@@ -120,6 +122,17 @@ class AppleseedEnvMap
     float           m_sat_multiplier;
     float           m_horizon_shift;
     float           m_ground_albedo;
+};
+
+
+//
+// Sun node parameter accessor - class declaration
+//
+class SunNodePBAccessor
+    : public PBAccessor
+{
+  public:
+    void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t) override;
 };
 
 
