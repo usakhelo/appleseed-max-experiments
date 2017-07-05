@@ -69,7 +69,8 @@ namespace
         ParamIdLuminGamma           = 7,
         ParamIdSatMultiplier        = 8,
         ParamIdHorizonShift         = 10,
-        ParamIdGroundAlbedo         = 11
+        ParamIdGroundAlbedo         = 11,
+        ParamIdSunNode              = 12
     };
 
     enum TexmapId
@@ -116,6 +117,12 @@ namespace
             p_default, 0.0f,
             p_range, 0.0f, 360.0f,
             p_ui, TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_PHI, IDC_SPIN_PHI, 0.01f,
+        p_end,
+
+        ParamIdSunNode, _T("sun_node"), TYPE_INODE, 0, IDS_SUN_NODE,
+            p_ui, TYPE_PICKNODEBUTTON, IDC_PICK_SUN_NODE,
+            p_sclassID, LIGHT_CLASS_ID,
+            p_prompt, IDS_PICK_SUN_PROMPT,
         p_end,
 
         ParamIdTurbidity, _T("turbidity"), TYPE_FLOAT, P_ANIMATABLE, IDS_TURBIDITY,
@@ -370,6 +377,7 @@ void AppleseedEnvMap::Update(TimeValue t, Interval& valid)
 
         m_pblock->GetValue(ParamIdSunTheta, t, m_sun_theta, m_params_validity);
         m_pblock->GetValue(ParamIdSunPhi, t, m_sun_phi, m_params_validity);
+        m_pblock->GetValue(ParamIdSunNode, t, m_sun_node, m_params_validity);
 
         m_pblock->GetValue(ParamIdTurbidity, t, m_turbidity, m_params_validity);
         m_pblock->GetValue(ParamIdTurbidityMap, t, m_turbidity_map, m_params_validity);

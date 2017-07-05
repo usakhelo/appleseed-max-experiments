@@ -60,7 +60,7 @@ BEGIN
     CONTROL         "",IDC_EDIT_GROUND_ALBEDO,"CustEdit",WS_TABSTOP,85,144,35,10
     CONTROL         "",IDC_SPIN_GROUND_ALBEDO,"SpinnerControl",0x0,121,144,7,10
     LTEXT           "Ground Albedo:",IDC_STATIC,13,144,50,8
-    CONTROL         "Pick Sun Light",IDC_PICK_SUN,"CustButton",NOT WS_VISIBLE | WS_TABSTOP,136,12,68,14
+    CONTROL         "Pick Sun Light",IDC_PICK_SUN_NODE,"CustButton",WS_TABSTOP,136,12,68,14
     CONTROL         "",IDC_TURB_TEX_ON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,196,56,8,10
 END
 
@@ -117,16 +117,29 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ENVMAP_PANEL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
 STRINGTABLE
 BEGIN
     IDS_LIBDESCRIPTION      "appleseed Environment Map"
+    IDS_SUN_NODE            "Sun Node"
     IDS_CLASS_NAME          "appleseed Env Map"
     IDS_ENVMAP_PARAMS       "appleseed Environment Map Parameters"
     IDS_CLASS_NAME_CDESC    "appleseed Environment Map"
     IDS_THETA               "Sun Theta Angle"
+    IDS_PICK_SUN_PROMPT     "Pick Directional Light"
     IDS_PHI                 "Sun Phi Angle"
     IDS_TURBIDITY           "Turbidity"
     IDS_TURB_MULTIPLIER     "Turbidity Multiplier"

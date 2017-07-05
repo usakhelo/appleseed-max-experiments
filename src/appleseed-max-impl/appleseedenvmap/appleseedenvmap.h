@@ -109,6 +109,7 @@ class AppleseedEnvMap
     IParamBlock2*   m_pblock;          // ref 0
     Interval        m_params_validity;
     Interval        m_map_validity;
+    INode*          m_sun_node;
     float           m_sun_theta;
     float           m_sun_phi;
     float           m_turbidity;
