@@ -133,11 +133,11 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_LIBDESCRIPTION      "appleseed Environment Map"
+    IDS_LIBDESCRIPTION      "appleseed Sky"
     IDS_SUN_NODE            "Sun Node"
-    IDS_CLASS_NAME          "appleseed Env Map"
-    IDS_ENVMAP_PARAMS       "appleseed Environment Map Parameters"
-    IDS_CLASS_NAME_CDESC    "appleseed Environment Map"
+    IDS_CLASS_NAME          "appleseed Sky"
+    IDS_ENVMAP_PARAMS       "appleseed Sky Parameters"
+    IDS_CLASS_NAME_CDESC    "appleseed Sky"
     IDS_THETA               "Sun Theta Angle"
     IDS_PICK_SUN_PROMPT     "Pick Directional Light"
     IDS_PHI                 "Sun Phi Angle"
