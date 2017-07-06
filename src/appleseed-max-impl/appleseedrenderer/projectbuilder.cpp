@@ -698,8 +698,28 @@ namespace
         assembly.lights().insert(light);
     }
 
+    void add_sun_light(
+        asr::Assembly&          assembly,
+        const std::string&      light_name,
+        const asf::Transformd&  transform,
+        const std::string&      color_name,
+        const float             intensity)
+    {
+        asf::auto_release_ptr<asr::Light> light(
+            asr::SunLightFactory::static_create(
+                light_name.c_str(),
+                asr::ParamArray()
+                .insert("turbidity", 3.0)
+                .insert("radiance_multiplier", 2.0)
+                .insert("environment_edf", "")
+                .insert("size_multiplier", 1.0)));
+        light->set_transform(transform);
+        assembly.lights().insert(light);
+    }
+
     void add_light(
         asr::Assembly&          assembly,
+        const RendParams        rend_params,
         INode*                  light_node,
         const TimeValue         time)
     {
@@ -726,7 +746,23 @@ namespace
         const std::string color_name =
             insert_color(assembly, light_name + "_color", color);
 
-        if (light_object->ClassID() == Class_ID(OMNI_LIGHT_CLASS_ID, 0))
+        // Get light from envmap
+        if (rend_params.envMap != nullptr && 
+            rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()))
+        {
+            auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
+            if (light_node == appleseed_envmap->m_sun_node)
+            {
+                //todo: check if sun is on
+                add_sun_light(
+                    assembly,
+                    light_name,
+                    transform,
+                    color_name,
+                    intensity);
+            }
+        }
+        else if (light_object->ClassID() == Class_ID(OMNI_LIGHT_CLASS_ID, 0))
         {
             add_omni_light(
                 assembly,
@@ -770,13 +806,14 @@ namespace
 
     void add_lights(
         asr::Assembly&          assembly,
+        const RendParams        rend_params,
         const MaxSceneEntities& entities,
         const TimeValue         time)
     {
         for (const auto& light_info : entities.m_lights)
         {
             if (light_info.m_enabled)
-                add_light(assembly, light_info.m_light, time);
+                add_light(assembly, rend_params, light_info.m_light, time);
         }
     }
 
@@ -873,6 +910,7 @@ namespace
 
     void populate_assembly(
         asr::Assembly&                      assembly,
+        const RendParams&                   rend_params,
         const MaxSceneEntities&             entities,
         const std::vector<DefaultLight>&    default_lights,
         const RenderType                    type,
@@ -885,7 +923,7 @@ namespace
         add_objects(assembly, entities, type, time, object_map, material_map);
 
         // Only add non-physical lights. Light-emitting materials were added by material plugins.
-        add_lights(assembly, entities, time);
+        add_lights(assembly, rend_params, entities, time);
 
         if (entities.m_lights.empty() && !has_light_emitting_materials(material_map))
         {
@@ -980,7 +1018,23 @@ namespace
                 auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
                 if (appleseed_envmap)
                 {
-                    scene.environment_edfs().insert(appleseed_envmap->create_envmap(env_edf_name.c_str()));
+                    auto env_map = appleseed_envmap->create_envmap(env_edf_name.c_str());
+                    
+                    INode* light_node = appleseed_envmap->m_sun_node;
+
+                    // Compute theta and phi based on sun position
+                    auto light_matrix = to_matrix4d(light_node->GetObjTMAfterWSM(time));
+                    double yaw, pitch, roll;
+                    light_matrix.extract_matrix3().extract_euler_angles(yaw, pitch, roll);
+
+                    float sun_theta = rad_to_deg(yaw);
+                    float sun_phi = rad_to_deg(pitch);
+
+                    const asr::Source* t1 = env_map->get_inputs().source("sun_theta");
+                    t1->evaluate_uniform(sun_theta);
+                    env_map->get_inputs().source("sun_phi")->evaluate_uniform(sun_phi);
+
+                    scene.environment_edfs().insert(env_map);
                 }
             }
             else
@@ -1254,6 +1308,7 @@ asf::auto_release_ptr<asr::Project> build_project(
         rend_params.inMtlEdit ? RenderType::MaterialPreview : RenderType::Default;
     populate_assembly(
         assembly.ref(),
+        rend_params,
         entities,
         default_lights,
         type,
