@@ -52,6 +52,7 @@
 #include "renderer/api/scene.h"
 #include "renderer/api/texture.h"
 #include "renderer/api/utility.h"
+#include "renderer/modeling/input/source.h"
 
 // appleseed.foundation headers.
 #include "foundation/image/colorspace.h"
@@ -78,6 +79,7 @@
 #include <Scene/IPhysicalCamera.h>
 #endif
 #include <triobj.h>
+#include <trig.h>
 
 // Standard headers.
 #include <cstddef>
@@ -711,7 +713,7 @@ namespace
                 asr::ParamArray()
                 .insert("turbidity", 3.0)
                 .insert("radiance_multiplier", 2.0)
-                .insert("environment_edf", "")
+                //.insert("environment_edf", "")
                 .insert("size_multiplier", 1.0)));
         light->set_transform(transform);
         assembly.lights().insert(light);
@@ -751,7 +753,9 @@ namespace
             rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()))
         {
             auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
-            if (light_node == appleseed_envmap->m_sun_node)
+            INode* sun_node;
+            appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_node"), time, sun_node, FOREVER);
+            if (light_node == sun_node)
             {
                 //todo: check if sun is on
                 add_sun_light(
@@ -1020,19 +1024,19 @@ namespace
                 {
                     auto env_map = appleseed_envmap->create_envmap(env_edf_name.c_str());
                     
-                    INode* light_node = appleseed_envmap->m_sun_node;
+                    INode* sun_node;
+                    appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_node"), time, sun_node, FOREVER);
 
                     // Compute theta and phi based on sun position
-                    auto light_matrix = to_matrix4d(light_node->GetObjTMAfterWSM(time));
-                    double yaw, pitch, roll;
-                    light_matrix.extract_matrix3().extract_euler_angles(yaw, pitch, roll);
+                    float yaw, pitch, roll;
+                    Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(time);
+                    sun_transform.GetYawPitchRoll(&yaw, &pitch, &roll);
 
-                    float sun_theta = rad_to_deg(yaw);
-                    float sun_phi = rad_to_deg(pitch);
+                    double sun_theta = asf::abs(RadToDeg(yaw));
+                    double sun_phi = (90 - RadToDeg(roll));
 
-                    const asr::Source* t1 = env_map->get_inputs().source("sun_theta");
-                    t1->evaluate_uniform(sun_theta);
-                    env_map->get_inputs().source("sun_phi")->evaluate_uniform(sun_phi);
+                    env_map->get_parameters().set("sun_theta", sun_theta);
+                    env_map->get_parameters().set("sun_phi", sun_phi);
 
                     scene.environment_edfs().insert(env_map);
                 }

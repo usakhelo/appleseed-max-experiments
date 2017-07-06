@@ -102,16 +102,15 @@ class AppleseedEnvMap
 
     virtual foundation::auto_release_ptr<renderer::EnvironmentEDF> create_envmap(const char* name);
 
+  protected:
+    virtual void SetReference(int i, RefTargetHandle rtarg) override;
+
+  private:
     IParamBlock2*   m_pblock;          // ref 0
     float           m_sun_theta;
     float           m_sun_phi;
     INode*          m_sun_node;
     BOOL            m_sun_node_on;
-
-  protected:
-    virtual void SetReference(int i, RefTargetHandle rtarg) override;
-
-  private:
     Interval        m_params_validity;
     float           m_turbidity;
     Texmap*         m_turbidity_map;

@@ -593,13 +593,14 @@ void SunNodePBAccessor::Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int 
 {
     AppleseedEnvMap* p = (AppleseedEnvMap*)owner;
     IParamMap2* map = nullptr;
+    IParamBlock2* pblock = p->GetParamBlock(0);
     INode* sun_node;
     int sun_node_on;
-    if (p->m_pblock)
+    if (pblock)
     {
-        map = p->m_pblock->GetMap();
-        p->m_pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
-        p->m_pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
+        map = pblock->GetMap();
+        pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
+        pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
     }
 
     if (map)
@@ -608,14 +609,13 @@ void SunNodePBAccessor::Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int 
         {
         case ParamIdSunNodeOn:
         {
-
             map->Enable(ParamIdSunTheta, (v.i && sun_node) ? FALSE : TRUE);
             map->Enable(ParamIdSunPhi, (v.i && sun_node) ? FALSE : TRUE);
         }
         break;
         case ParamIdSunNode:
         {
-            p->m_pblock->SetValue(ParamIdSunNodeOn, t, (v.r) ? TRUE : FALSE);
+            pblock->SetValue(ParamIdSunNodeOn, t, (v.r) ? TRUE : FALSE);
             map->Enable(ParamIdSunTheta, (v.r && sun_node_on) ? FALSE : TRUE);
             map->Enable(ParamIdSunPhi, (v.r && sun_node_on) ? FALSE : TRUE);
         }
