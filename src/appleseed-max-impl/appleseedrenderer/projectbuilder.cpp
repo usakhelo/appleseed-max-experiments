@@ -705,16 +705,17 @@ namespace
         const std::string&      light_name,
         const asf::Transformd&  transform,
         const std::string&      color_name,
-        const float             intensity)
+        const float             intensity,
+        const char*             sky_name)
     {
         asf::auto_release_ptr<asr::Light> light(
             asr::SunLightFactory::static_create(
                 light_name.c_str(),
                 asr::ParamArray()
-                .insert("turbidity", 3.0)
-                .insert("radiance_multiplier", 2.0)
-                //.insert("environment_edf", "")
-                .insert("size_multiplier", 1.0)));
+                .insert("radiance_multiplier", intensity * asf::Pi<float>())
+                .insert("turbidity", 1.0)
+                .insert("environment_edf", sky_name)
+                .insert("size_multiplier", 4.0)));
         light->set_transform(transform);
         assembly.lights().insert(light);
     }
@@ -754,23 +755,26 @@ namespace
         const std::string color_name =
             insert_color(assembly, light_name + "_color", color);
 
-        // Get light from envmap
+        INode* sun_node;
+        AppleseedEnvMap* env_map;
         if (has_appleseed_sky_environment(rend_params))
         {
-            auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
-            INode* sun_node;
-            appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_node"), time, sun_node, FOREVER);
-            if (light_node == sun_node)
-            {
-                //todo: check if sun is on
-                add_sun_light(
-                    assembly,
-                    light_name,
-                    transform,
-                    color_name,
-                    intensity);
-            }
+            env_map = static_cast<AppleseedEnvMap*>(rend_params.envMap);
+            env_map->GetParamBlock(0)->GetValueByName(_T("sun_node"), time, sun_node, FOREVER);
         }
+
+        // Get light from envmap
+        if (light_node == sun_node)
+        {
+            //todo: check if sun is on
+            add_sun_light(
+                assembly,
+                light_name,
+                transform,
+                color_name,
+                intensity,
+                "environment_edf");
+        }        
         else if (light_object->ClassID() == Class_ID(OMNI_LIGHT_CLASS_ID, 0))
         {
             add_omni_light(
@@ -1034,17 +1038,19 @@ namespace
                     INode* sun_node;
                     appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_node"), time, sun_node, FOREVER);
 
-                    // Compute theta and phi based on sun position
-                    float yaw, pitch, roll;
-                    Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(time);
-                    sun_transform.GetYawPitchRoll(&yaw, &pitch, &roll);
+                    if (sun_node)
+                    {
+                        // Compute theta and phi based on sun position
+                        Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(time);
+                        float yaw, pitch, roll;
+                        sun_transform.GetYawPitchRoll(&yaw, &pitch, &roll);
 
-                    const double sun_theta = asf::abs(asf::rad_to_deg(yaw));
-                    const double sun_phi = (90.0 - asf::rad_to_deg(roll));
+                        const double sun_theta = asf::abs(asf::rad_to_deg(yaw));
+                        const double sun_phi = (90.0 - asf::rad_to_deg(roll));
 
-                    env_map->get_parameters().set("sun_theta", sun_theta);
-                    env_map->get_parameters().set("sun_phi", sun_phi);
-
+                        env_map->get_parameters().set("sun_theta", sun_theta);
+                        env_map->get_parameters().set("sun_phi", sun_phi);
+                    }
                     scene.environment_edfs().insert(env_map);
                 }
             }
