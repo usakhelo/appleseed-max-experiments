@@ -719,9 +719,15 @@ namespace
         assembly.lights().insert(light);
     }
 
+    bool has_appleseed_sky_environment(const RendParams& rend_params)
+    {
+        return (rend_params.envMap != nullptr &&
+            rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()));
+    }
+
     void add_light(
         asr::Assembly&          assembly,
-        const RendParams        rend_params,
+        const RendParams&       rend_params,
         INode*                  light_node,
         const TimeValue         time)
     {
@@ -749,8 +755,7 @@ namespace
             insert_color(assembly, light_name + "_color", color);
 
         // Get light from envmap
-        if (rend_params.envMap != nullptr && 
-            rend_params.envMap->IsSubClassOf(AppleseedEnvMap::get_class_id()))
+        if (has_appleseed_sky_environment(rend_params))
         {
             auto appleseed_envmap = static_cast<AppleseedEnvMap*>(rend_params.envMap);
             INode* sun_node;
@@ -929,7 +934,9 @@ namespace
         // Only add non-physical lights. Light-emitting materials were added by material plugins.
         add_lights(assembly, rend_params, entities, time);
 
-        if (entities.m_lights.empty() && !has_light_emitting_materials(material_map))
+        if (entities.m_lights.empty() 
+            && !has_light_emitting_materials(material_map)
+            && !has_appleseed_sky_environment(rend_params))
         {
             // No non-physical light or light-emitting material: add Max's default lights.
             add_default_lights(assembly, default_lights);
@@ -1032,8 +1039,8 @@ namespace
                     Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(time);
                     sun_transform.GetYawPitchRoll(&yaw, &pitch, &roll);
 
-                    double sun_theta = asf::abs(RadToDeg(yaw));
-                    double sun_phi = (90 - RadToDeg(roll));
+                    const double sun_theta = asf::abs(asf::rad_to_deg(yaw));
+                    const double sun_phi = (90.0 - asf::rad_to_deg(roll));
 
                     env_map->get_parameters().set("sun_theta", sun_theta);
                     env_map->get_parameters().set("sun_phi", sun_phi);
