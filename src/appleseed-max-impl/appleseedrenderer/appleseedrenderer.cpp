@@ -35,6 +35,7 @@
 #include "appleseedrenderer/projectbuilder.h"
 #include "appleseedrenderer/renderercontroller.h"
 #include "appleseedrenderer/tilecallback.h"
+#include "appleseeddisneymtl/appleseeddisneymtl.h"
 #include "utilities.h"
 #include "version.h"
 
@@ -553,6 +554,11 @@ void AppleseedRenderer::clear()
 // AppleseedRendererClassDesc class implementation.
 //
 
+AppleseedRendererClassDesc::AppleseedRendererClassDesc()
+{
+	IMtlRender_Compatibility_Renderer::Init(*this);
+}
+
 int AppleseedRendererClassDesc::IsPublic()
 {
     return TRUE;
@@ -587,4 +593,11 @@ const MCHAR* AppleseedRendererClassDesc::InternalName()
 {
     // Parsable name used by MAXScript.
     return _T("appleseedRenderer");
+}
+
+bool AppleseedRendererClassDesc::IsCompatibleWithMtlBase(ClassDesc& mtlBaseClassDesc)
+{
+	//bool is_appleseed, is_standard, is_multimat, is_appleseed_envmap, is_bitmap;
+	
+	return mtlBaseClassDesc.ClassID() == AppleseedDisneyMtl::get_class_id() ? true : false;
 }

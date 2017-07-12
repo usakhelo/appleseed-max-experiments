@@ -37,6 +37,7 @@
 
 // 3ds Max headers.
 #include <iparamb2.h>
+#include <IMtlRender_Compatibility.h>
 #include <max.h>
 #include <render.h>
 #undef base_type
@@ -140,15 +141,20 @@ class AppleseedRenderer
 
 class AppleseedRendererClassDesc
   : public ClassDesc2
+	, public IMtlRender_Compatibility_Renderer
 {
   public:
-    virtual int IsPublic() override;
+		AppleseedRendererClassDesc();
+		virtual int IsPublic() override;
     virtual void* Create(BOOL loading) override;
     virtual const MCHAR* ClassName() override;
     virtual SClass_ID SuperClassID() override;
     virtual Class_ID ClassID() override;
     virtual const MCHAR* Category() override;
     virtual const MCHAR* InternalName() override;
+
+		// IMtlRender_Compatibility_MtlBase methods.
+		virtual bool IsCompatibleWithMtlBase(ClassDesc& mtlBaseClassDesc) override;
 };
 
 extern AppleseedRendererClassDesc g_appleseed_renderer_classdesc;
