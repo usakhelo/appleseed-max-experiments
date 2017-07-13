@@ -298,7 +298,7 @@ void AppleseedEnvMap::SetReference(int i, RefTargetHandle rtarg)
     }
 }
 
-RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTargetHandle hTarget, PartID& /*partID*/, RefMessage message, BOOL /*propagate*/)
+RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTargetHandle hTarget, PartID& partID, RefMessage message, BOOL /*propagate*/)
 {
     switch (message)
     {
@@ -310,21 +310,35 @@ RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTa
         break;
 
       case REFMSG_CHANGE:
-        m_params_validity.SetEmpty();
         if (hTarget == m_pblock)
-            g_block_desc.InvalidateUI(m_pblock->LastNotifyParamID());
-
-        if (m_pblock->LastNotifyParamID() == ParamIdSunNode)
         {
-            INode* sun_node;
-            int sun_node_on;
-            m_pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
-            m_pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
-            IParamMap2* map = m_pblock->GetMap();
-            if (map != NULL) {
-                map->Enable(ParamIdSunTheta, (sun_node_on && sun_node) ? FALSE : TRUE);
-                map->Enable(ParamIdSunPhi, (sun_node_on && sun_node) ? FALSE : TRUE);
-            }
+          ParamID changing_param = m_pblock->LastNotifyParamID();
+          switch (changing_param)
+          {
+            case ParamIdSunNode:
+              {
+                  INode* sun_node;
+                  int sun_node_on;
+                  m_pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
+                  m_pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
+                  IParamMap2* p_map = m_pblock->GetMap();
+                  if (p_map != NULL)
+                  {
+                      p_map->Enable(ParamIdSunTheta, (sun_node_on && sun_node) ? FALSE : TRUE);
+                      p_map->Enable(ParamIdSunPhi, (sun_node_on && sun_node) ? FALSE : TRUE);
+                  }
+
+                  if (partID == PART_TM)
+                  {
+
+                  }
+              }
+              break;
+            default:
+              g_block_desc.InvalidateUI(m_pblock->LastNotifyParamID());
+              break;
+          }
+          m_params_validity.SetEmpty();
         }
         break;
     }
