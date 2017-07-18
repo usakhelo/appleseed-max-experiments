@@ -330,6 +330,11 @@ RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTa
 
                   if (partID == PART_TM)
                   {
+                    //x = std::cos(phi) * sin_theta,
+                    //y = std::sin(phi) * sin_theta);
+                    //z = std::cos(theta),
+                    //theta = std::acos(z);
+                    //phi = acos(x / cos (90 - theta))
 
                   }
               }
