@@ -100,6 +100,7 @@ class AppleseedEnvMap
     virtual RGBA EvalColor(ShadeContext& sc) override;
     virtual Point3 EvalNormalPerturb(ShadeContext& sc) override;
 
+    void    ComputeThetaPhi(TimeValue t);
     virtual foundation::auto_release_ptr<renderer::EnvironmentEDF> create_envmap(const char* name);
 
   protected:
@@ -131,6 +132,8 @@ class SunNodePBAccessor
     : public PBAccessor
 {
   public:
+    void TabChanged(tab_changes changeCode, Tab<PB2Value>* tab,
+      ReferenceMaker* owner, ParamID id, int tabIndex, int count) override;
     void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t) override;
 };
 

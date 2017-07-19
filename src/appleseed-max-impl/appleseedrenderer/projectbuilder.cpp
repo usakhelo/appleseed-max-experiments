@@ -1040,23 +1040,12 @@ namespace
 
                     if (sun_node)
                     {
-                        // Compute theta and phi based on sun position
-                        Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(time);
-                        float yaw, pitch, roll;
-                        sun_transform.GetYawPitchRoll(&yaw, &pitch, &roll);
-                        const Point3 pos_vec = sun_transform.GetTrans().Normalize();
-                        const double sun_theta = std::acos(pos_vec.z);
-                        const double sun_phi = std::acos(pos_vec.x / std::cos(asf::HalfPi<double>() - sun_theta));
-
-                        //theta = std::acos(z);
-                        //phi = acos(x / cos (90 - theta))
-
-                        //const double sun_theta = asf::abs(asf::rad_to_deg(yaw));
-                        //const double sun_phi = (90.0 - asf::rad_to_deg(roll));
-                        auto theta = asf::rad_to_deg(sun_theta);
-                        auto phi = asf::rad_to_deg(sun_phi);
-                        env_map->get_parameters().set("sun_theta", asf::rad_to_deg(sun_theta));
-                        env_map->get_parameters().set("sun_phi", asf::rad_to_deg(sun_phi));
+                        appleseed_envmap->ComputeThetaPhi(time);
+                        float sun_theta, sun_phi;
+                        appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_theta"), time, sun_theta, FOREVER);
+                        appleseed_envmap->GetParamBlock(0)->GetValueByName(_T("sun_phi"), time, sun_phi, FOREVER);
+                        env_map->get_parameters().set("sun_theta", sun_theta);
+                        env_map->get_parameters().set("sun_phi", sun_phi);
                     }
                     scene.environment_edfs().insert(env_map);
                 }

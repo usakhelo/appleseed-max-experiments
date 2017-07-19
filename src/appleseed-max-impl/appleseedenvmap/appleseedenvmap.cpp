@@ -298,14 +298,62 @@ void AppleseedEnvMap::SetReference(int i, RefTargetHandle rtarg)
     }
 }
 
-RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTargetHandle hTarget, PartID& partID, RefMessage message, BOOL /*propagate*/)
+void AppleseedEnvMap::ComputeThetaPhi(TimeValue t)
+{
+    INode* sun_node;
+    
+    m_pblock->GetValue(ParamIdSunNode, t, sun_node, FOREVER);
+    Matrix3 sun_transform = sun_node->GetObjTMAfterWSM(t);
+
+    // Compute the transform of this light.
+    const asf::Transformd transform =
+      asf::Transformd::from_local_to_parent(
+        to_matrix4d(sun_node->GetObjTMAfterWSM(t)));
+
+    //const asf::Vector3d sun_vec = -asf::normalize(transform.get_parent_z());
+
+    const Point3 sun_vec = sun_transform.GetTrans().Normalize();
+
+    //x = cos(phi) * sin_theta
+    //y = sin(phi) * sin_theta
+    //z = cos(theta)
+    //cos_theta^2 + sin_theta^2 = 1
+    //sin_theta = sqrt(1 - cos_theta^2)
+    //cos_phi = x / sin_theta = x / sqrt(1 - cos_theta^2)
+
+    const double sun_theta = std::acos(sun_vec.z);
+    const double sun_phi = std::acos(sun_vec.x / sqrt(1.0 - std::pow(sun_vec.z, 2)));
+
+    m_pblock->SetValue(ParamIdSunTheta, t, (float)asf::rad_to_deg(sun_theta));
+    m_pblock->SetValue(ParamIdSunPhi, t, (float)asf::rad_to_deg(sun_phi));
+}
+
+RefResult AppleseedEnvMap::NotifyRefChanged(
+    const Interval& /*changeInt*/,
+    RefTargetHandle hTarget,
+    PartID& partID,
+    RefMessage message,
+    BOOL /*propagate*/)
 {
     switch (message)
     {
+      case REFMSG_CONTAINER_ELEMENT_NULLED:
+        {
+          if (hTarget == m_pblock)
+          {
+            ParamID changing_param = m_pblock->LastNotifyParamID();
+            if (changing_param == ParamIdSunNode)
+            {
+              g_block_desc.InvalidateUI(changing_param);
+            }
+          }
+        }
+        break;
+
       case REFMSG_TARGET_DELETED:
         if (hTarget == m_pblock)
         {
-            m_pblock = nullptr;
+          m_pblock = nullptr;
         }
         break;
 
@@ -313,36 +361,14 @@ RefResult AppleseedEnvMap::NotifyRefChanged(const Interval& /*changeInt*/, RefTa
         if (hTarget == m_pblock)
         {
           ParamID changing_param = m_pblock->LastNotifyParamID();
-          switch (changing_param)
+          if (changing_param == ParamIdSunNode)
           {
-            case ParamIdSunNode:
-              {
-                  INode* sun_node;
-                  int sun_node_on;
-                  m_pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
-                  m_pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
-                  IParamMap2* p_map = m_pblock->GetMap();
-                  if (p_map != NULL)
-                  {
-                      p_map->Enable(ParamIdSunTheta, (sun_node_on && sun_node) ? FALSE : TRUE);
-                      p_map->Enable(ParamIdSunPhi, (sun_node_on && sun_node) ? FALSE : TRUE);
-                  }
-
                   if (partID == PART_TM)
                   {
-                    //x = std::cos(phi) * sin_theta,
-                    //y = std::sin(phi) * sin_theta);
-                    //z = std::cos(theta),
-                    //theta = std::acos(z);
-                    //phi = acos(x / cos (90 - theta))
-
+                      ComputeThetaPhi(GetCOREInterface()->GetTime());
                   }
-              }
-              break;
-            default:
-              g_block_desc.InvalidateUI(m_pblock->LastNotifyParamID());
-              break;
           }
+          g_block_desc.InvalidateUI(m_pblock->LastNotifyParamID());
           m_params_validity.SetEmpty();
         }
         break;
@@ -464,7 +490,7 @@ namespace
             switch (umsg)
             {
               case WM_INITDIALOG:
-                enable_disable_controls(hwnd, map);
+                enable_controls(hwnd, map);
                 return TRUE;
 
               default:
@@ -473,7 +499,7 @@ namespace
         }
 
       private:
-        void enable_disable_controls(HWND hwnd, IParamMap2* map)
+        void enable_controls(HWND hwnd, IParamMap2* map)
         {
             INode* sun_node;
             int sun_node_on;
@@ -607,38 +633,72 @@ Bitmap* AppleseedEnvMapBrowserEntryInfo::GetEntryThumbnail() const
 //
 // Sun node parameter accessor - class declaration
 //
+void SunNodePBAccessor::TabChanged(
+    tab_changes       changeCode, 
+    Tab<PB2Value>*    tab,
+    ReferenceMaker*   owner, 
+    ParamID           id, 
+    int               tabIndex, 
+    int               count)
+{
+  if (id == ParamIdSunNode)
+  {
+    if (changeCode == tab_ref_deleted)
+    {
+      AppleseedEnvMap* p = (AppleseedEnvMap*)owner;
+      IParamBlock2* pblock = p->GetParamBlock(0);
+      if (pblock)
+      {
+        IParamMap2* map = pblock->GetMap();
+        if (map)
+        {
+          map->Enable(ParamIdSunTheta, TRUE);
+          map->Enable(ParamIdSunPhi, TRUE);
+        }
+      }
+    }
+  }
+}
 
-void SunNodePBAccessor::Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+void SunNodePBAccessor::Set(
+    PB2Value&         v,
+    ReferenceMaker*   owner,
+    ParamID           id,
+    int               tabIndex,
+    TimeValue         t)
 {
     AppleseedEnvMap* p = (AppleseedEnvMap*)owner;
-    IParamMap2* map = nullptr;
     IParamBlock2* pblock = p->GetParamBlock(0);
     INode* sun_node;
     int sun_node_on;
     if (pblock)
     {
-        map = pblock->GetMap();
+        IParamMap2* map = pblock->GetMap();
         pblock->GetValue(ParamIdSunNode, 0, sun_node, FOREVER);
         pblock->GetValue(ParamIdSunNodeOn, 0, sun_node_on, FOREVER);
-    }
+        if (map)
+        {
+            switch (id)
+            {
+              case ParamIdSunNodeOn:
+              {
+                  map->Enable(ParamIdSunTheta, (v.i && sun_node) ? FALSE : TRUE);
+                  map->Enable(ParamIdSunPhi, (v.i && sun_node) ? FALSE : TRUE);
+              }
+              break;
+              case ParamIdSunNode:
+              {
+                  pblock->SetValue(ParamIdSunNodeOn, t, (v.r) ? TRUE : FALSE);
+                  map->Enable(ParamIdSunTheta, (v.r && sun_node_on) ? FALSE : TRUE);
+                  map->Enable(ParamIdSunPhi, (v.r && sun_node_on) ? FALSE : TRUE);
 
-    if (map)
-    {
-        switch (id)
-        {
-        case ParamIdSunNodeOn:
-        {
-            map->Enable(ParamIdSunTheta, (v.i && sun_node) ? FALSE : TRUE);
-            map->Enable(ParamIdSunPhi, (v.i && sun_node) ? FALSE : TRUE);
-        }
-        break;
-        case ParamIdSunNode:
-        {
-            pblock->SetValue(ParamIdSunNodeOn, t, (v.r) ? TRUE : FALSE);
-            map->Enable(ParamIdSunTheta, (v.r && sun_node_on) ? FALSE : TRUE);
-            map->Enable(ParamIdSunPhi, (v.r && sun_node_on) ? FALSE : TRUE);
-        }
-        break;
+                  if (v.r && sun_node_on)
+                  {
+                    p->ComputeThetaPhi(t);
+                  }
+              }
+              break;
+            }
         }
     }
 }
