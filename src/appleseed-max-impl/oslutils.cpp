@@ -40,6 +40,7 @@
 #include "foundation/utility/string.h"
 
 // 3ds Max Headers.
+#include <maxapi.h>
 #include <bitmap.h>
 #include <stdmat.h>
 
@@ -99,10 +100,21 @@ void connect_color_texture(
 {
     auto layer_name = asf::format("{0}_{1}", material_node_name, material_input_name);
 
-    shader_group.add_shader("shader", "as_max_color_texture", layer_name.c_str(),
-        asr::ParamArray()
-            .insert("Filename", fmt_osl_expr(texmap))
-            .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier))));
+    asr::ParamArray texture_params;
+    texture_params.insert("Filename", fmt_osl_expr(texmap));
+    texture_params.insert("Multiplier", fmt_osl_expr(to_color3f(multiplier)));
+    if (texmap && texmap->ClassID() == Class_ID(BMTEX_CLASS_ID, 0))
+    {
+        StdUVGen* uv_gen = ((BitmapTex*)texmap)->GetUVGen();
+        if (uv_gen) {
+            texture_params.insert("U", fmt_osl_expr(uv_gen->GetUOffs(GetCOREInterface()->GetTime())));
+        }
+    }
+    shader_group.add_shader("shader", "as_max_color_texture", layer_name.c_str(), texture_params);
+    //    asr::ParamArray()
+    //        .insert("Filename", fmt_osl_expr(texmap))
+    //        .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier)))
+    //);
 
     shader_group.add_connection(
         layer_name.c_str(), "ColorOut",
