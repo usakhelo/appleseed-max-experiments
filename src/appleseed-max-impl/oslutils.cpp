@@ -43,6 +43,7 @@
 #include <maxapi.h>
 #include <bitmap.h>
 #include <stdmat.h>
+#include "dbgprint.h"
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -107,7 +108,15 @@ void connect_color_texture(
     {
         StdUVGen* uv_gen = ((BitmapTex*)texmap)->GetUVGen();
         if (uv_gen) {
-            texture_params.insert("U", fmt_osl_expr(uv_gen->GetUOffs(GetCOREInterface()->GetTime())));
+            TimeValue t = GetCOREInterface()->GetTime();
+            DebugPrint(_T("GetUOffs: %f\n"), uv_gen->GetUOffs(t));
+            DebugPrint(_T("GetVOffs: %f\n"), uv_gen->GetVOffs(t));
+            DebugPrint(_T("GetUScl: %f\n"), uv_gen->GetUScl(t));
+            DebugPrint(_T("GetVScl: %f\n"), uv_gen->GetVScl(t));
+            texture_params.insert("U", fmt_osl_expr(uv_gen->GetUOffs(t)));
+            texture_params.insert("V", fmt_osl_expr(uv_gen->GetVOffs(t)));
+            //texture_params.insert("UWidth", fmt_osl_expr(uv_gen->GetUScl(t)));
+            //texture_params.insert("VWidth", fmt_osl_expr(uv_gen->GetVScl(t)));
         }
     }
     shader_group.add_shader("shader", "as_max_color_texture", layer_name.c_str(), texture_params);
