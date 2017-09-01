@@ -40,9 +40,6 @@
 // 3ds Max headers.
 #include <interactiverender.h>
 
-// Forward declarations.
-class Bitmap;
-
 InteractiveSession::InteractiveSession(
     IIRenderMgr*                            iirender_mgr,
     asr::Project*                           project,

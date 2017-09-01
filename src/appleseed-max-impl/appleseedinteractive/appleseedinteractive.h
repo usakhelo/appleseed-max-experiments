@@ -47,13 +47,16 @@
 namespace renderer { class Project; }
 class AppleseedRenderer;
 class InteractiveSession;
+class ViewParams;
 
 namespace asf = foundation;
 namespace asr = renderer;
 
 class AppleseedInteractiveRender
   : public IInteractiveRender
+#if MAX_RELEASE != MAX_RELEASE_R19
   , public MaxSDK::IAbortableRenderer
+#endif
 {
   public:
     AppleseedInteractiveRender();

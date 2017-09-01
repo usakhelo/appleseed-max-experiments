@@ -29,6 +29,9 @@
 // Interface header.
 #include "appleseedinteractive/interactivetilecallback.h"
 
+// 3ds Max headers.
+#include "maxapi.h"
+
 namespace asr = renderer;
 
 namespace
@@ -40,7 +43,7 @@ InteractiveTileCallback::InteractiveTileCallback(
     Bitmap*                         bitmap,
     IIRenderMgr*                    iimanager,
     asr::IRendererController*       render_controller)
-    : TileCallback(bitmap, &m_rendered_tile_count)
+    : TileCallback(bitmap, nullptr)
     , m_bitmap(bitmap)
     , m_iimanager(iimanager)
     , m_renderer_ctrl(render_controller)
