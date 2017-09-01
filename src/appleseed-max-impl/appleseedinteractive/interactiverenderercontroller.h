@@ -31,17 +31,24 @@
 // appleseed.renderer headers.
 #include "renderer/api/rendering.h"
 
+// Forward declarations.
+class RendProgressCallback;
+
 class InteractiveRendererController
   : public renderer::DefaultRendererController
 {
   public:
-    InteractiveRendererController();
+    InteractiveRendererController(RendProgressCallback* progress_cb);
 
     virtual void on_rendering_begin() override;
     virtual Status get_status() const override;
-    
+#if MAX_RELEASE == MAX_RELEASE_R17
+    virtual void on_progress() override;
+#endif
+
     void set_status(const Status status);
 
   private:
-    Status m_status;
+      RendProgressCallback* m_progress_cb;
+      Status                m_status;
 };
