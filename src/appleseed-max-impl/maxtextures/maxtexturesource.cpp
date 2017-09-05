@@ -5,8 +5,9 @@
 
 
 class MaxProcTextureSource
-    : public renderer::MaxTextureSource
+  : public renderer::MaxTextureSource
 {
+  public:
     MaxProcTextureSource(
         const renderer::TextureInstance& texture_instance)
         : renderer::MaxTextureSource(texture_instance)

@@ -51,12 +51,12 @@
 // Standard headers.
 #include <cstddef>
 #include <string>
+#include <vector>
 
 // Forward declarations.
 namespace renderer  { class BaseGroup; }
 class Interval;
 class Texmap;
-
 
 //
 // Math functions.

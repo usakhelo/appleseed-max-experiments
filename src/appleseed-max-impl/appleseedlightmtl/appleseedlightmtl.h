@@ -48,7 +48,7 @@
 #undef base_type
 
 // Forward declarations.
-namespace renderer  { class Material; }
+namespace renderer { class Material; }
 class BaseInterface;
 class Bitmap;
 class Color;

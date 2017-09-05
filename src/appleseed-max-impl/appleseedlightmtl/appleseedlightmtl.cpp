@@ -36,6 +36,7 @@
 #include "main.h"
 #include "utilities.h"
 #include "version.h"
+#include "maxtextures/maxtexturesource.cpp"
 
 // appleseed.renderer headers.
 #include "renderer/api/edf.h"
@@ -59,6 +60,7 @@
 
 // Standard headers.
 #include <algorithm>
+#include <string>
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -498,7 +500,13 @@ asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(
 
         // Radiance.
         if (is_bitmap_texture(m_light_color_texmap))
-            edf_params.insert("radiance", insert_texture_and_instance(assembly, m_light_color_texmap));
+        {
+            std::string texture_instance_name = insert_texture_and_instance(assembly, m_light_color_texmap);
+            edf_params.insert("radiance", texture_instance_name);
+
+            renderer::TextureInstance* tex_instance = assembly.texture_instances().get_by_name(texture_instance_name.c_str());
+            custom_sources.push_back(new MaxProcTextureSource(*tex_instance));
+        }
         else
         {
             const auto color_name = std::string(name) + "_edf_radiance";
