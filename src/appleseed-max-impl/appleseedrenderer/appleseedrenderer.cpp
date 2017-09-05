@@ -38,6 +38,7 @@
 #include "appleseedrenderer/tilecallback.h"
 #include "utilities.h"
 #include "version.h"
+#include "maxtextures/maxtexturesource.cpp"
 
 // appleseed.renderer headers.
 #include "renderer/api/frame.h"
@@ -61,6 +62,7 @@
 #include <clocale>
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -111,7 +113,7 @@ void* AppleseedRenderer::GetInterface(ULONG id)
     if (id == I_RENDER_ID)
     {
         if (m_interactive_renderer == nullptr)
-            m_interactive_renderer = new AppleseedInteractiveRender();
+            m_interactive_renderer = new AppleseedInteractiveRender(this);
 
         return static_cast<IInteractiveRender*>(m_interactive_renderer);
     }
@@ -353,10 +355,11 @@ namespace
     }
 
     void render(
-        asr::Project&           project,
-        const RendererSettings& settings,
-        Bitmap*                 bitmap,
-        RendProgressCallback*   progress_cb)
+        asr::Project&                       project,
+        const RendererSettings&             settings,
+        Bitmap*                             bitmap,
+        RendProgressCallback*               progress_cb,
+        std::vector<MaxProcTextureSource*>& sources)
     {
         // Number of rendered tiles, shared counter accessed atomically.
         volatile asf::uint32 rendered_tile_count = 0;
@@ -380,6 +383,10 @@ namespace
                 project.configurations().get_by_name("final")->get_inherited_parameters(),
                 &renderer_controller,
                 &tile_callback));
+
+        // Set source for max procedural textures
+        for (auto source : sources)
+            renderer->add_custom_source(source);
 
         // Render the frame.
         renderer->render();
@@ -440,6 +447,7 @@ int AppleseedRenderer::Render(
             m_rend_params,
             frame_rend_params,
             renderer_settings,
+            m_custom_sources,
             bitmap,
             time));
 
@@ -451,7 +459,7 @@ int AppleseedRenderer::Render(
         // Render the project.
         if (progress_cb)
             progress_cb->SetTitle(_T("Rendering..."));
-        render(project.ref(), m_settings, bitmap, progress_cb);
+        render(project.ref(), m_settings, bitmap, progress_cb, m_custom_sources);
     }
     else
     {
@@ -477,11 +485,11 @@ int AppleseedRenderer::Render(
                 asf::ProcessPriorityContext background_context(
                     asf::ProcessPriority::ProcessPriorityLow,
                     &asr::global_logger());
-                render(project.ref(), m_settings, bitmap, progress_cb);
+                render(project.ref(), m_settings, bitmap, progress_cb, m_custom_sources);
             }
             else
             {
-                render(project.ref(), m_settings, bitmap, progress_cb);
+                render(project.ref(), m_settings, bitmap, progress_cb, m_custom_sources);
             }
         }
     }

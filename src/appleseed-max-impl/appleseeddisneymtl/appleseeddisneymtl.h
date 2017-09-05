@@ -58,6 +58,7 @@ class Interval;
 class ISave;
 class ShadeContext;
 class Texmap;
+class MaxProcTextureSource;
 
 class AppleseedDisneyMtl
   : public Mtl
@@ -132,7 +133,8 @@ class AppleseedDisneyMtl
     virtual bool can_emit_light() const override;
     virtual foundation::auto_release_ptr<renderer::Material> create_material(
         renderer::Assembly& assembly,
-        const char*         name) override;
+        const char*         name,
+        std::vector<MaxProcTextureSource*>& custom_sources) override;
 
   private:
     IParamBlock2*   m_pblock;

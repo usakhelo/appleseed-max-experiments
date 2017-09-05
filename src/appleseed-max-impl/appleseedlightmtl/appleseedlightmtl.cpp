@@ -482,7 +482,10 @@ bool AppleseedLightMtl::can_emit_light() const
     return true;
 }
 
-asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(asr::Assembly& assembly, const char* name)
+asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(
+    asr::Assembly& assembly,
+    const char* name,
+    std::vector<MaxProcTextureSource*>& custom_sources)
 {
     asr::ParamArray material_params;
 

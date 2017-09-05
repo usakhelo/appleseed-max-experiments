@@ -34,6 +34,7 @@
 #include "appleseedinteractive/interactivesession.h"
 #include "appleseedinteractive/interactivetilecallback.h"
 #include "appleseedrenderer/projectbuilder.h"
+#include "appleseedrenderer/appleseedrenderer.h"
 #include "utilities.h"
 
 // 3ds Max headers.
@@ -218,7 +219,7 @@ namespace
 // AppleseedInteractiveRender class implementation.
 //
 
-AppleseedInteractiveRender::AppleseedInteractiveRender()
+AppleseedInteractiveRender::AppleseedInteractiveRender(AppleseedRenderer* renderer)
   : m_owner_wnd(0)
   , m_bitmap(nullptr)
   , m_iirender_mgr(nullptr)
@@ -227,6 +228,7 @@ AppleseedInteractiveRender::AppleseedInteractiveRender()
   , m_view_inode(nullptr)
   , m_view_exp(nullptr)
   , m_progress_cb(nullptr)
+  , m_prod_renderer(renderer)
 {
     m_entities.clear();
 }
@@ -279,6 +281,7 @@ asf::auto_release_ptr<asr::Project> AppleseedInteractiveRender::prepare_project(
             rend_params,
             frame_rend_params,
             renderer_settings,
+            m_prod_renderer->m_custom_sources,
             m_bitmap,
             time));
 

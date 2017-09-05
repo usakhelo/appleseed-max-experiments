@@ -55,7 +55,7 @@ class AppleseedInteractiveRender
   , public MaxSDK::IAbortableRenderer
 {
   public:
-    AppleseedInteractiveRender();
+    AppleseedInteractiveRender(AppleseedRenderer* renderer);
     virtual ~AppleseedInteractiveRender();
 
     // IInteractiveRender methods.
@@ -101,6 +101,7 @@ class AppleseedInteractiveRender
     foundation::auto_release_ptr<renderer::Project> m_project;
     Bitmap*                                         m_bitmap;
     std::vector<DefaultLight>                       m_default_lights;
+    AppleseedRenderer*                              m_prod_renderer;
     IIRenderMgr*                                    m_iirender_mgr;
     HWND                                            m_owner_wnd;
     IRenderProgressCallback*                        m_progress_cb;

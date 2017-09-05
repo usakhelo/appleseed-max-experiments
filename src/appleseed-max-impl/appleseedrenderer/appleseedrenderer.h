@@ -49,6 +49,7 @@
 
 // Forward declarations.
 class AppleseedInteractiveRender;
+class MaxProcTextureSource;
 
 class AppleseedRenderer
   : public Renderer
@@ -128,16 +129,17 @@ class AppleseedRenderer
     virtual IOResult Save(ISave* isave) override;
     virtual IOResult Load(ILoad* iload) override;
 
+    std::vector<MaxProcTextureSource*>  m_custom_sources;
   private:
-    AppleseedInteractiveRender* m_interactive_renderer;
-    RendererSettings            m_settings;
-    INode*                      m_scene;
-    INode*                      m_view_node;
-    ViewParams                  m_view_params;
-    RendParams                  m_rend_params;
-    std::vector<DefaultLight>   m_default_lights;
-    TimeValue                   m_time;
-    MaxSceneEntities            m_entities;
+    AppleseedInteractiveRender*         m_interactive_renderer;
+    RendererSettings                    m_settings;
+    INode*                              m_scene;
+    INode*                              m_view_node;
+    ViewParams                          m_view_params;
+    RendParams                          m_rend_params;
+    std::vector<DefaultLight>           m_default_lights;
+    TimeValue                           m_time;
+    MaxSceneEntities                    m_entities;
 
     void clear();
 };

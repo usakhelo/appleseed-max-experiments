@@ -713,7 +713,10 @@ bool AppleseedDisneyMtl::can_emit_light() const
     return false;
 }
 
-asf::auto_release_ptr<asr::Material> AppleseedDisneyMtl::create_material(asr::Assembly& assembly, const char* name)
+asf::auto_release_ptr<asr::Material> AppleseedDisneyMtl::create_material(
+    asr::Assembly& assembly,
+    const char* name,
+    std::vector<MaxProcTextureSource*>& custom_sources)
 {
     //
     // Shader group.
