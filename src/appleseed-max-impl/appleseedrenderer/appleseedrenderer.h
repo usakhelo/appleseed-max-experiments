@@ -49,7 +49,7 @@
 
 // Forward declarations.
 class AppleseedInteractiveRender;
-class MaxProcTextureSource;
+namespace renderer { class MaxProcTextureSource; }
 
 class AppleseedRenderer
   : public Renderer
@@ -129,7 +129,7 @@ class AppleseedRenderer
     virtual IOResult Save(ISave* isave) override;
     virtual IOResult Load(ILoad* iload) override;
 
-    std::vector<MaxProcTextureSource*>  m_custom_sources;
+    std::vector<renderer::MaxProcTextureSource*>  m_custom_sources;
   private:
     AppleseedInteractiveRender*         m_interactive_renderer;
     RendererSettings                    m_settings;

@@ -629,7 +629,7 @@ bool AppleseedGlassMtl::can_emit_light() const
 asf::auto_release_ptr<asr::Material> AppleseedGlassMtl::create_material(
     asr::Assembly& assembly,
     const char* name,
-    std::vector<MaxProcTextureSource*>& custom_sources)
+    std::vector<asr::MaxProcTextureSource*>& custom_sources)
 {
     asr::ParamArray material_params;
 

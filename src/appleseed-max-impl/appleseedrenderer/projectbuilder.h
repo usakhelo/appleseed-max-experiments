@@ -51,7 +51,7 @@ class MaxSceneEntities;
 class RendererSettings;
 class RendParams;
 class ViewParams;
-class MaxProcTextureSource;
+namespace renderer { class MaxProcTextureSource; }
 
 // Build an appleseed project from the current 3ds Max scene.
 foundation::auto_release_ptr<renderer::Project> build_project(
@@ -62,7 +62,7 @@ foundation::auto_release_ptr<renderer::Project> build_project(
     const RendParams&                   rend_params,
     const FrameRendParams&              frame_rend_params,
     const RendererSettings&             settings,
-    std::vector<MaxProcTextureSource*>& custom_sources,
+    std::vector<renderer::MaxProcTextureSource*>& custom_sources,
     Bitmap*                             bitmap,
     const TimeValue                     time);
 

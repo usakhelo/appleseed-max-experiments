@@ -133,7 +133,7 @@ class AppleseedGlassMtl
     virtual foundation::auto_release_ptr<renderer::Material> create_material(
         renderer::Assembly& assembly,
         const char*         name,
-        std::vector<MaxProcTextureSource*>& custom_sources) override;
+        std::vector<renderer::MaxProcTextureSource*>& custom_sources) override;
 
   private:
     IParamBlock2*   m_pblock;

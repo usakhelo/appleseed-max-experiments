@@ -36,7 +36,7 @@
 #include "main.h"
 #include "utilities.h"
 #include "version.h"
-#include "maxtextures/maxtexturesource.cpp"
+#include "maxtextures/maxproctexturesource.h"
 
 // appleseed.renderer headers.
 #include "renderer/api/edf.h"
@@ -487,7 +487,7 @@ bool AppleseedLightMtl::can_emit_light() const
 asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(
     asr::Assembly& assembly,
     const char* name,
-    std::vector<MaxProcTextureSource*>& custom_sources)
+    std::vector<asr::MaxProcTextureSource*>& custom_sources)
 {
     asr::ParamArray material_params;
 
@@ -505,7 +505,7 @@ asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(
             edf_params.insert("radiance", texture_instance_name);
 
             renderer::TextureInstance* tex_instance = assembly.texture_instances().get_by_name(texture_instance_name.c_str());
-            custom_sources.push_back(new MaxProcTextureSource(*tex_instance));
+            custom_sources.push_back(new asr::MaxProcTextureSource(*tex_instance));
         }
         else
         {

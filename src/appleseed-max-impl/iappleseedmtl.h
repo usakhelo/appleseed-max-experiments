@@ -40,9 +40,9 @@
 
 // Forward declarations.
 namespace renderer  { class Assembly; }
-namespace renderer  { class Material; }
+namespace renderer { class Material; }
+namespace renderer  { class MaxProcTextureSource; }
 class Interface_ID;
-class MaxProcTextureSource;
 
 class IAppleseedMtl
   : public BaseInterface
@@ -63,5 +63,5 @@ class IAppleseedMtl
     virtual foundation::auto_release_ptr<renderer::Material> create_material(
         renderer::Assembly& assembly,
         const char*         name,
-        std::vector<MaxProcTextureSource*>& custom_sources) = 0;
+        std::vector<renderer::MaxProcTextureSource*>& custom_sources) = 0;
 };

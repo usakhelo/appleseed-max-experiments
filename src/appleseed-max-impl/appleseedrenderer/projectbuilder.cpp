@@ -37,7 +37,7 @@
 #include "iappleseedmtl.h"
 #include "seexprutils.h"
 #include "utilities.h"
-#include "maxtextures/maxtexturesource.cpp"
+#include "maxtextures/maxproctexturesource.h"
 
 // appleseed.renderer headers.
 #include "renderer/api/camera.h"
@@ -390,7 +390,7 @@ namespace
         asr::Assembly&          assembly,
         const std::string&      instance_name,
         Mtl*                    mtl,
-        std::vector<MaxProcTextureSource*>& custom_sources,
+        std::vector<asr::MaxProcTextureSource*>& custom_sources,
         MaterialMap&            material_map)
     {
         MaterialInfo material_info;
@@ -458,7 +458,7 @@ namespace
         const ObjectInfo&       object_info,
         const RenderType        type,
         const TimeValue         time,
-        std::vector<MaxProcTextureSource*>& custom_sources,
+        std::vector<asr::MaxProcTextureSource*>& custom_sources,
         MaterialMap&            material_map)
     {
         // Compute a unique name for this instance.
@@ -589,7 +589,7 @@ namespace
         const RenderType        type,
         const TimeValue         time,
         ObjectMap&              object_map,
-        std::vector<MaxProcTextureSource*>& custom_sources,
+        std::vector<asr::MaxProcTextureSource*>& custom_sources,
         MaterialMap&            material_map)
     {
         // Retrieve the geometrical object referenced by this node.
@@ -637,7 +637,7 @@ namespace
         const MaxSceneEntities& entities,
         const RenderType        type,
         const TimeValue         time,
-        std::vector<MaxProcTextureSource*>& custom_sources,
+        std::vector<asr::MaxProcTextureSource*>& custom_sources,
         ObjectMap&              object_map,
         MaterialMap&            material_map)
     {
@@ -948,7 +948,7 @@ namespace
         const RendParams&                   rend_params,
         const MaxSceneEntities&             entities,
         const std::vector<DefaultLight>&    default_lights,
-        std::vector<MaxProcTextureSource*>& custom_sources,
+        std::vector<asr::MaxProcTextureSource*>& custom_sources,
         const RenderType                    type,
         const TimeValue                     time)
     {
@@ -1335,7 +1335,7 @@ asf::auto_release_ptr<asr::Project> build_project(
     const RendParams&                       rend_params,
     const FrameRendParams&                  frame_rend_params,
     const RendererSettings&                 settings,
-    std::vector<MaxProcTextureSource*>&     custom_sources,
+    std::vector<asr::MaxProcTextureSource*>&     custom_sources,
     Bitmap*                                 bitmap,
     const TimeValue                         time)
 {

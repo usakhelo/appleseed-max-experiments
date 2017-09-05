@@ -38,7 +38,7 @@
 #include "appleseedrenderer/tilecallback.h"
 #include "utilities.h"
 #include "version.h"
-#include "maxtextures/maxtexturesource.cpp"
+#include "maxtextures/maxproctexturesource.h"
 
 // appleseed.renderer headers.
 #include "renderer/api/frame.h"
@@ -359,7 +359,7 @@ namespace
         const RendererSettings&             settings,
         Bitmap*                             bitmap,
         RendProgressCallback*               progress_cb,
-        std::vector<MaxProcTextureSource*>& sources)
+        std::vector<asr::MaxProcTextureSource*>& sources)
     {
         // Number of rendered tiles, shared counter accessed atomically.
         volatile asf::uint32 rendered_tile_count = 0;

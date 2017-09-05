@@ -48,7 +48,8 @@
 #undef base_type
 
 // Forward declarations.
-namespace renderer  { class Material; }
+namespace renderer { class Material; }
+namespace renderer  { class MaxProcTextureSource; }
 class BaseInterface;
 class Bitmap;
 class Color;
@@ -58,7 +59,6 @@ class Interval;
 class ISave;
 class ShadeContext;
 class Texmap;
-class MaxProcTextureSource;
 
 class AppleseedDisneyMtl
   : public Mtl
@@ -134,7 +134,7 @@ class AppleseedDisneyMtl
     virtual foundation::auto_release_ptr<renderer::Material> create_material(
         renderer::Assembly& assembly,
         const char*         name,
-        std::vector<MaxProcTextureSource*>& custom_sources) override;
+        std::vector<renderer::MaxProcTextureSource*>& custom_sources) override;
 
   private:
     IParamBlock2*   m_pblock;
