@@ -118,6 +118,17 @@ bool is_bitmap_texture(Texmap* map)
     return true;
 }
 
+bool is_supported_texture(Texmap* map)
+{
+    if (map == nullptr)
+        return false;
+
+    if (map->ClassID() != Class_ID(CHECKER_CLASS_ID, 0))
+        return false;
+
+    return true;
+}
+
 std::string get_root_path()
 {
     wchar_t path[MAX_PATH];
@@ -177,6 +188,47 @@ std::string insert_texture_and_instance(
             texture_instance_name.c_str(),
             texture_instance_params,
             texture_name.c_str()));
+    }
+
+    return texture_instance_name;
+}
+
+std::string insert_procedural_texture(
+    asr::BaseGroup& base_group,
+    Texmap*         texmap,
+    asr::ParamArray texture_params,
+    asr::ParamArray texture_instance_params)
+{
+    BitmapTex* bitmap_tex = static_cast<BitmapTex*>(texmap);
+
+    const std::string filepath = "C:\\Users\\spogosyan\\Desktop\\dummy_texture.jpg";
+    texture_params.insert("filename", filepath);
+
+    if (!texture_params.strings().exist("color_space"))
+    {
+        if (asf::ends_with(filepath, ".exr"))
+            texture_params.insert("color_space", "linear_rgb");
+        else texture_params.insert("color_space", "srgb");
+    }
+
+    const std::string texture_name = wide_to_utf8(bitmap_tex->GetName());
+    if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
+    {
+        base_group.textures().insert(
+            asr::DiskTexture2dFactory::static_create(
+                texture_name.c_str(),
+                texture_params,
+                asf::SearchPaths()));
+    }
+
+    const std::string texture_instance_name = texture_name + "_inst";
+    if (base_group.texture_instances().get_by_name(texture_instance_name.c_str()) == nullptr)
+    {
+        base_group.texture_instances().insert(
+            asr::TextureInstanceFactory::create(
+                texture_instance_name.c_str(),
+                texture_instance_params,
+                texture_name.c_str()));
     }
 
     return texture_instance_name;

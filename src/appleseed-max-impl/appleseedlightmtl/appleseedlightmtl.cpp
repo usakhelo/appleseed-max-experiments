@@ -505,8 +505,17 @@ asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(
             edf_params.insert("radiance", texture_instance_name);
 
             renderer::TextureInstance* tex_instance = assembly.texture_instances().get_by_name(texture_instance_name.c_str());
-            custom_sources.push_back(new asr::MaxProcTextureSource(*tex_instance));
+            custom_sources.push_back(new asr::MaxProcTextureSource(*tex_instance, m_light_color_texmap));
         }
+        else if (is_supported_texture(m_light_color_texmap))
+        {
+            std::string texture_instance_name = insert_procedural_texture(assembly, m_light_color_texmap);
+            edf_params.insert("radiance", texture_instance_name);
+
+            renderer::TextureInstance* tex_instance = assembly.texture_instances().get_by_name(texture_instance_name.c_str());
+            custom_sources.push_back(new asr::MaxProcTextureSource(*tex_instance, m_light_color_texmap));
+        }
+        
         else
         {
             const auto color_name = std::string(name) + "_edf_radiance";

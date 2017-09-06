@@ -100,7 +100,7 @@ std::wstring utf8_to_wide(const char* str);
 
 // Return true if a given map is a valid bitmap texture.
 bool is_bitmap_texture(Texmap* map);
-
+bool is_supported_texture(Texmap* map);
 
 //
 // I/O functions.
@@ -156,6 +156,11 @@ std::string insert_texture_and_instance(
     renderer::ParamArray    texture_params = renderer::ParamArray(),
     renderer::ParamArray    texture_instance_params = renderer::ParamArray());
 
+std::string insert_procedural_texture(
+    renderer::BaseGroup&    base_group,
+    Texmap*                 texmap,
+    renderer::ParamArray    texture_params = renderer::ParamArray(),
+    renderer::ParamArray    texture_instance_params = renderer::ParamArray());
 
 //
 // Implementation.
