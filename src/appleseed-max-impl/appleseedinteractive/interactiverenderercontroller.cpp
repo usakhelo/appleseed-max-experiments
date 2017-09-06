@@ -29,9 +29,6 @@
 // Interface header.
 #include "interactiverenderercontroller.h"
 
-// 3ds Max headers.
-#include <interactiverender.h>
-
 namespace asr = renderer;
 
 InteractiveRendererController::InteractiveRendererController()
