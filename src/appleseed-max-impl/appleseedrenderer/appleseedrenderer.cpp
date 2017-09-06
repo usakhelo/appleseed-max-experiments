@@ -588,6 +588,7 @@ void AppleseedRenderer::clear()
     m_default_lights.clear();
     m_time = 0;
     m_entities.clear();
+    m_custom_sources.clear();
 }
 
 
