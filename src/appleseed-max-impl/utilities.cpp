@@ -34,6 +34,7 @@
 
 // appleseed.renderer headers.
 #include "renderer/api/color.h"
+#include "renderer/api/source.h"
 #include "renderer/api/texture.h"
 
 // appleseed.foundation headers.
@@ -53,6 +54,144 @@
 
 namespace asf = foundation;
 namespace asr = renderer;
+
+namespace
+{
+    class MaxProceduralTextureSource
+        : public asr::Source
+    {
+    public:
+        MaxProceduralTextureSource()
+            : asr::Source(false)
+        {
+        }
+
+        virtual asf::uint64 compute_signature() const override
+        {
+            return 0;
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            float&                      scalar) const override
+        {
+            scalar = asf::luminance(evaluate_color(uv));
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            asf::Color3f&               linear_rgb) const override
+        {
+            linear_rgb = evaluate_color(uv);
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            asr::Spectrum&              spectrum) const override
+        {
+            DbgAssert(spectrum.size() == 3);
+            const asf::Color3f linear_rgb = evaluate_color(uv);
+            spectrum[0] = linear_rgb[0];
+            spectrum[1] = linear_rgb[1];
+            spectrum[2] = linear_rgb[2];
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            asr::Alpha&                 alpha) const override
+        {
+            alpha.set(1.0f);
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            asf::Color3f&               linear_rgb,
+            asr::Alpha&                 alpha) const override
+        {
+            linear_rgb = evaluate_color(uv);
+            alpha.set(1.0f);
+        }
+
+        virtual void evaluate(
+            asr::TextureCache&          texture_cache,
+            const asf::Vector2f&        uv,
+            asr::Spectrum&              spectrum,
+            asr::Alpha&                 alpha) const override
+        {
+            DbgAssert(spectrum.size() == 3);
+            const asf::Color3f linear_rgb = evaluate_color(uv);
+            spectrum[0] = linear_rgb[0];
+            spectrum[1] = linear_rgb[1];
+            spectrum[2] = linear_rgb[2];
+            alpha.set(1.0f);
+        }
+
+    private:
+        static asf::Color3f evaluate_color(const asf::Vector2f& uv)
+        {
+            return asf::Color3f(std::sin(uv[0]), std::sin(uv[1]), uv[0] * uv[1]);
+        }
+    };
+
+    class MaxProceduralTexture
+        : public asr::Texture
+    {
+    public:
+        explicit MaxProceduralTexture(const char* name)
+            : asr::Texture(name, asr::ParamArray())
+        {
+        }
+
+        virtual void release() override
+        {
+            delete this;
+        }
+
+        virtual const char* get_model() const override
+        {
+            return "max_procedural_texture";
+        }
+
+        virtual asf::ColorSpace get_color_space() const override
+        {
+            return asf::ColorSpaceLinearRGB;
+        }
+
+        virtual const asf::CanvasProperties& properties() override
+        {
+            return m_properties;
+        }
+
+        virtual asr::Source* create_source(
+            const asf::UniqueID         assembly_uid,
+            const asr::TextureInstance& texture_instance) override
+        {
+            return new MaxProceduralTextureSource();
+        }
+
+        virtual asf::Tile* load_tile(
+            const size_t                tile_x,
+            const size_t                tile_y) override
+        {
+            return nullptr;
+        }
+
+        virtual void unload_tile(
+            const size_t                tile_x,
+            const size_t                tile_y,
+            const asf::Tile*            tile) override
+        {
+        }
+
+    private:
+        asf::CanvasProperties m_properties;
+    };
+}
 
 std::string wide_to_utf8(const std::wstring& wstr)
 {
@@ -118,6 +257,73 @@ bool is_bitmap_texture(Texmap* map)
     return true;
 }
 
+bool is_supported_texture(Texmap* map)
+{
+    if (map == nullptr)
+        return false;
+
+    switch (map->ClassID().PartA())
+    {
+        // Not needed at the moment.
+        //case MIRROR_CLASS_ID:       // Flat mirror.
+        //case FALLOFF_CLASS_ID:      // Falloff texture.
+        //case ACUBIC_CLASS_ID:       // Reflect/refract.
+        //case PLATET_CLASS_ID:       // Plate glass texture.
+
+    case 0x64035FB9:              // Tiles.
+        if (map->ClassID().PartB() == 0x69664CDC)
+            return true;
+        break;
+    case 0x1DEC5B86:              // Gradient Ramp.
+        if (map->ClassID().PartB() == 0x43383A51)
+            return true;
+        break;
+    case 0x72C8577F:              // Swirl.
+        if (map->ClassID().PartB() == 0x39A00A1B)
+            return true;
+        break;
+    case 0x23AD0AE9:              // Perlin Marble.
+        if (map->ClassID().PartB() == 0x158D7A88)
+            return true;
+        break;
+    case 0x243E22C6:              // Normal Bump.
+        if (map->ClassID().PartB() == 0x63F6A014)
+            return true;
+        break;
+    case 0x93A92749:              // Vector Map.
+        if (map->ClassID().PartB() == 0x6B8D470A)
+            return true;
+        break;
+    case CHECKER_CLASS_ID:
+    case MARBLE_CLASS_ID:
+    case MASK_CLASS_ID:
+    case MIX_CLASS_ID:
+    case NOISE_CLASS_ID:
+    case GRADIENT_CLASS_ID:
+    case TINT_CLASS_ID:
+    case BMTEX_CLASS_ID:
+    case COMPOSITE_CLASS_ID:
+    case RGBMULT_CLASS_ID:
+    case OUTPUT_CLASS_ID:
+    case COLORCORRECTION_CLASS_ID:
+    case 0x0000214:               // WOOD_CLASS_ID
+    case 0x0000218:               // DENT_CLASS_ID
+    case 0x46396cf1:              // PLANET_CLASS_ID
+    case 0x7712634e:              // WATER_CLASS_ID
+    case 0xa845e7c:               // SMOKE_CLASS_ID
+    case 0x62c32b8a:              // SPECKLE_CLASS_ID
+    case 0x90b04f9:               // SPLAT_CLASS_ID
+    case 0x9312fbe:               // STUCCO_CLASS_ID
+        return true;
+        break;
+    default:
+        return false;
+        break;
+    }
+
+    return true;
+}
+
 std::string get_root_path()
 {
     wchar_t path[MAX_PATH];
@@ -163,10 +369,15 @@ std::string insert_texture_and_instance(
     if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
     {
         base_group.textures().insert(
-            asr::DiskTexture2dFactory::static_create(
-                texture_name.c_str(),
-                texture_params,
-                asf::SearchPaths()));
+            asf::auto_release_ptr<asr::Texture>(
+                new MaxProceduralTexture(
+                    texture_name.c_str())));
+
+        //base_group.textures().insert(
+        //    asr::DiskTexture2dFactory::static_create(
+        //        texture_name.c_str(),
+        //        texture_params,
+        //        asf::SearchPaths()));
     }
 
     const std::string texture_instance_name = texture_name + "_inst";
