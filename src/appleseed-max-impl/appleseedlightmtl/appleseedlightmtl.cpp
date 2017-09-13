@@ -494,7 +494,7 @@ asf::auto_release_ptr<asr::Material> AppleseedLightMtl::create_material(asr::Ass
         asr::ParamArray edf_params;
 
         // Radiance.
-        if (is_bitmap_texture(m_light_color_texmap))
+        if (m_light_color_texmap)
             edf_params.insert("radiance", insert_texture_and_instance(assembly, m_light_color_texmap));
         else
         {

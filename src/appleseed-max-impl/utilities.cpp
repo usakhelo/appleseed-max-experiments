@@ -48,6 +48,7 @@
 #include <imtl.h>
 #include <plugapi.h>
 #include <stdmat.h>
+#include <maxapi.h>
 
 // Windows headers.
 #include <Shlwapi.h>
@@ -57,12 +58,66 @@ namespace asr = renderer;
 
 namespace
 {
+    //--- Shade Context
+    class MaxShadeContext
+        :public ShadeContext
+    {
+    public:
+        TimeValue curtime;
+        Point3 ltPos; // position of point in light space
+        Point3 view;  // unit vector from light to point, in light space
+        Point3 dp;
+        Point2 uv, duv;
+        IPoint2 scrpos;
+        float curve;
+        int projType;
+
+        BOOL InMtlEditor() { return false; }
+        LightDesc* Light(int n) { return NULL; }
+        TimeValue CurTime() { return GetCOREInterface()->GetTime(); }
+        int NodeID() { return -1; }
+        int FaceNumber() { return 0; }
+        int ProjType() { return projType; }
+        Point3 Normal() { return Point3(0, 0, 0); }
+        Point3 GNormal() { return Point3(0, 0, 0); }
+        Point3 ReflectVector() { return Point3(0, 0, 0); }
+        Point3 RefractVector(float ior) { return Point3(0, 0, 0); }
+        Point3 CamPos() { return Point3(0, 0, 0); }
+        Point3 V() { return view; }
+        void SetView(Point3 v) { view = v; }
+        Point3 P() { return ltPos; }
+        Point3 DP() { return dp; }
+        Point3 PObj() { return ltPos; }
+        Point3 DPObj() { return Point3(0, 0, 0); }
+        Box3 ObjectBox() { return Box3(Point3(-1, -1, -1), Point3(1, 1, 1)); }
+        Point3 PObjRelBox() { return view; }
+        Point3 DPObjRelBox() { return Point3(0, 0, 0); }
+        void ScreenUV(Point2& UV, Point2 &Duv) { UV = uv; Duv = duv; }
+        IPoint2 ScreenCoord() { return scrpos; }
+        Point3 UVW(int chan) { return Point3(uv.x, uv.y, 0.0f); }
+        Point3 DUVW(int chan) { return Point3(duv.x, duv.y, 0.0f); }
+        void DPdUVW(Point3 dP[3], int chan) {}  // dont need bump vectors
+        void GetBGColor(Color &bgcol, Color& transp, BOOL fogBG = TRUE) {}   // returns Background color, bg transparency
+        float Curve() { return curve; }
+
+        // Transform to and from internal space
+        Point3 PointTo(const Point3& p, RefFrame ito) { return p; }
+        Point3 PointFrom(const Point3& p, RefFrame ifrom) { return p; }
+        Point3 VectorTo(const Point3& p, RefFrame ito) { return p; }
+        Point3 VectorFrom(const Point3& p, RefFrame ifrom) { return p; }
+        MaxShadeContext() { doMaps = TRUE; curve = 0.0f; dp = Point3(0.0f, 0.0f, 0.0f); }
+    };
+}
+
+namespace
+{
     class MaxProceduralTextureSource
         : public asr::Source
     {
     public:
-        MaxProceduralTextureSource()
+        MaxProceduralTextureSource(Texmap* texmap)
             : asr::Source(false)
+            , m_texmap(texmap)
         {
         }
 
@@ -132,18 +187,40 @@ namespace
         }
 
     private:
-        static asf::Color3f evaluate_color(const asf::Vector2f& uv)
+        asf::Color3f evaluate_color(const asf::Vector2f& uv) const
         {
-            return asf::Color3f(std::sin(uv[0]), std::sin(uv[1]), uv[0] * uv[1]);
+            MaxShadeContext maxsc;
+
+            maxsc.mode = SCMODE_NORMAL;
+            maxsc.projType = 0; // 0: perspective, 1: parallel
+            maxsc.curtime = GetCOREInterface()->GetTime();
+            //maxsc.curve = curve;
+            //maxsc.ltPos = plt;
+            //maxsc.view = FNormalize(Point3(plt.x, plt.y, 0.0f));
+            maxsc.uv.x = uv.x;
+            maxsc.uv.y = uv.y;
+            //maxsc.scrpos.x = (int)(x + 0.5);
+            //maxsc.scrpos.y = (int)(y + 0.5);
+            maxsc.filterMaps = false;
+            maxsc.mtlNum = 1;
+            //maxsc.globContext = sc.globContext;
+
+            AColor color = m_texmap->EvalColor(maxsc);
+
+            return asf::Color3f(color.r, color.g, color.b);
+            //return asf::Color3f(std::sin(uv[0]), std::sin(uv[1]), uv[0] * uv[1]);
         }
+
+        Texmap*                 m_texmap;
     };
 
     class MaxProceduralTexture
         : public asr::Texture
     {
     public:
-        explicit MaxProceduralTexture(const char* name)
+        explicit MaxProceduralTexture(const char* name, Texmap* texmap)
             : asr::Texture(name, asr::ParamArray())
+            , m_texmap(texmap)
         {
         }
 
@@ -171,7 +248,7 @@ namespace
             const asf::UniqueID         assembly_uid,
             const asr::TextureInstance& texture_instance) override
         {
-            return new MaxProceduralTextureSource();
+            return new MaxProceduralTextureSource(m_texmap);
         }
 
         virtual asf::Tile* load_tile(
@@ -189,7 +266,8 @@ namespace
         }
 
     private:
-        asf::CanvasProperties m_properties;
+        asf::CanvasProperties   m_properties;
+        Texmap*                 m_texmap;
     };
 }
 
@@ -262,7 +340,10 @@ bool is_supported_texture(Texmap* map)
     if (map == nullptr)
         return false;
 
-    switch (map->ClassID().PartA())
+    auto part_a = map->ClassID().PartA();
+    auto part_b = map->ClassID().PartB();
+
+    switch (part_a)
     {
         // Not needed at the moment.
         //case MIRROR_CLASS_ID:       // Flat mirror.
@@ -271,27 +352,27 @@ bool is_supported_texture(Texmap* map)
         //case PLATET_CLASS_ID:       // Plate glass texture.
 
     case 0x64035FB9:              // Tiles.
-        if (map->ClassID().PartB() == 0x69664CDC)
+        if (part_b == 0x69664CDC)
             return true;
         break;
     case 0x1DEC5B86:              // Gradient Ramp.
-        if (map->ClassID().PartB() == 0x43383A51)
+        if (part_b == 0x43383A51)
             return true;
         break;
     case 0x72C8577F:              // Swirl.
-        if (map->ClassID().PartB() == 0x39A00A1B)
+        if (part_b == 0x39A00A1B)
             return true;
         break;
     case 0x23AD0AE9:              // Perlin Marble.
-        if (map->ClassID().PartB() == 0x158D7A88)
+        if (part_b == 0x158D7A88)
             return true;
         break;
     case 0x243E22C6:              // Normal Bump.
-        if (map->ClassID().PartB() == 0x63F6A014)
+        if (part_b == 0x63F6A014)
             return true;
         break;
     case 0x93A92749:              // Vector Map.
-        if (map->ClassID().PartB() == 0x6B8D470A)
+        if (part_b == 0x6B8D470A)
             return true;
         break;
     case CHECKER_CLASS_ID:
@@ -353,33 +434,48 @@ std::string insert_texture_and_instance(
     asr::ParamArray texture_params,
     asr::ParamArray texture_instance_params)
 {
-    BitmapTex* bitmap_tex = static_cast<BitmapTex*>(texmap);
-
-    const std::string filepath = wide_to_utf8(bitmap_tex->GetMap().GetFullFilePath());
-    texture_params.insert("filename", filepath);
-
-    if (!texture_params.strings().exist("color_space"))
+    const std::string texture_name = wide_to_utf8(texmap->GetName());
+    if (is_bitmap_texture(texmap))
     {
-        if (asf::ends_with(filepath, ".exr"))
+        BitmapTex* bitmap_tex = static_cast<BitmapTex*>(texmap);
+
+        const std::string filepath = wide_to_utf8(bitmap_tex->GetMap().GetFullFilePath());
+        texture_params.insert("filename", filepath);
+
+        if (!texture_params.strings().exist("color_space"))
+        {
+            if (asf::ends_with(filepath, ".exr"))
+                texture_params.insert("color_space", "linear_rgb");
+            else texture_params.insert("color_space", "srgb");
+        }
+
+        if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
+        {
+            base_group.textures().insert(
+                asr::DiskTexture2dFactory::static_create(
+                    texture_name.c_str(),
+                    texture_params,
+                    asf::SearchPaths()));
+        }
+    }
+    else if (is_supported_texture(texmap))
+    {
+        texmap->Update(GetCOREInterface()->GetTime(), FOREVER);
+
+        if (!texture_params.strings().exist("color_space"))
+        {
+            // todo: should check max's gamma settings here.
             texture_params.insert("color_space", "linear_rgb");
-        else texture_params.insert("color_space", "srgb");
+        }
+
+        if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
+        {
+            base_group.textures().insert(
+                asf::auto_release_ptr<asr::Texture>(
+                    new MaxProceduralTexture(
+                        texture_name.c_str(), texmap)));
+        }
     }
-
-    const std::string texture_name = wide_to_utf8(bitmap_tex->GetName());
-    if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
-    {
-        base_group.textures().insert(
-            asf::auto_release_ptr<asr::Texture>(
-                new MaxProceduralTexture(
-                    texture_name.c_str())));
-
-        //base_group.textures().insert(
-        //    asr::DiskTexture2dFactory::static_create(
-        //        texture_name.c_str(),
-        //        texture_params,
-        //        asf::SearchPaths()));
-    }
-
     const std::string texture_instance_name = texture_name + "_inst";
     if (base_group.texture_instances().get_by_name(texture_instance_name.c_str()) == nullptr)
     {
