@@ -58,54 +58,182 @@ namespace asr = renderer;
 
 namespace
 {
-    //--- Shade Context
     class MaxShadeContext
-        :public ShadeContext
+      : public ShadeContext
     {
-    public:
-        TimeValue curtime;
-        Point3 ltPos; // position of point in light space
-        Point3 view;  // unit vector from light to point, in light space
+      public:
+        TimeValue   cur_time;
+        Point2      duv;
+        Point2      uv;
+        int         proj_type;
+
+        MaxShadeContext()
+          : curve(0.0f)
+          , dp(Point3(0.0f, 0.0f, 0.0f))
+        {
+            doMaps = TRUE;
+        }
+
+        BOOL InMtlEditor() override
+        {
+            return false;
+        }
+
+        LightDesc* Light(int n) override
+        {
+            return nullptr;
+        }
+
+        TimeValue CurTime() override
+        {
+            return cur_time;
+        }
+
+        int NodeID() override
+        {
+            return -1;
+        }
+
+        int FaceNumber() override
+        {
+            return 0;
+        }
+
+        int ProjType() override
+        {
+            return proj_type;
+        }
+
+        Point3 Normal() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Point3 GNormal() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Point3 ReflectVector() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Point3 RefractVector(float ior) override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Point3 CamPos() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Point3 V() override
+        {
+            return view;
+        }
+
+        void SetView(Point3 v) override
+        {
+            view = v;
+        }
+
+        Point3 P() override
+        {
+            return light_pos;
+        }
+
+        Point3 DP() override
+        {
+            return dp;
+        }
+
+        Point3 PObj() override
+        {
+            return light_pos;
+        }
+
+        Point3 DPObj() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        Box3 ObjectBox() override
+        {
+            return Box3(Point3(-1, -1, -1), Point3(1, 1, 1));
+        }
+
+        Point3 PObjRelBox() override
+        {
+            return view;
+        }
+
+        Point3 DPObjRelBox() override
+        {
+            return Point3(0, 0, 0);
+        }
+
+        void ScreenUV(Point2& UV, Point2 &Duv) override
+        {
+            UV = uv;
+            Duv = duv;
+        }
+
+        IPoint2 ScreenCoord() override
+        {
+            return scr_pos;
+        }
+
+        Point3 UVW(int chan) override
+        {
+            return Point3(uv.x, uv.y, 0.0f);
+        }
+
+        Point3 DUVW(int chan) override
+        {
+            return Point3(duv.x, duv.y, 0.0f);
+        }
+
+        void DPdUVW(Point3 dP[3], int chan) override
+        {
+        }
+
+        void GetBGColor(Color &bgcol, Color& transp, BOOL fogBG = TRUE)
+        {
+        }
+
+        float Curve() override
+        {
+            return curve;
+        }
+
+        Point3 PointTo(const Point3& p, RefFrame ito)
+        {
+            return p;
+        }
+
+        Point3 PointFrom(const Point3& p, RefFrame ifrom)
+        {
+            return p;
+        }
+
+        Point3 VectorTo(const Point3& p, RefFrame ito)
+        {
+            return p;
+        }
+
+        Point3 VectorFrom(const Point3& p, RefFrame ifrom)
+        {
+            return p;
+        }
+
+      private:
+        Point3 light_pos;   // Position of point in light space.
+        Point3 view;        // Unit vector from light to point, in light space.
+        IPoint2 scr_pos;
         Point3 dp;
-        Point2 uv, duv;
-        IPoint2 scrpos;
         float curve;
-        int projType;
-
-        BOOL InMtlEditor() { return false; }
-        LightDesc* Light(int n) { return NULL; }
-        TimeValue CurTime() { return GetCOREInterface()->GetTime(); }
-        int NodeID() { return -1; }
-        int FaceNumber() { return 0; }
-        int ProjType() { return projType; }
-        Point3 Normal() { return Point3(0, 0, 0); }
-        Point3 GNormal() { return Point3(0, 0, 0); }
-        Point3 ReflectVector() { return Point3(0, 0, 0); }
-        Point3 RefractVector(float ior) { return Point3(0, 0, 0); }
-        Point3 CamPos() { return Point3(0, 0, 0); }
-        Point3 V() { return view; }
-        void SetView(Point3 v) { view = v; }
-        Point3 P() { return ltPos; }
-        Point3 DP() { return dp; }
-        Point3 PObj() { return ltPos; }
-        Point3 DPObj() { return Point3(0, 0, 0); }
-        Box3 ObjectBox() { return Box3(Point3(-1, -1, -1), Point3(1, 1, 1)); }
-        Point3 PObjRelBox() { return view; }
-        Point3 DPObjRelBox() { return Point3(0, 0, 0); }
-        void ScreenUV(Point2& UV, Point2 &Duv) { UV = uv; Duv = duv; }
-        IPoint2 ScreenCoord() { return scrpos; }
-        Point3 UVW(int chan) { return Point3(uv.x, uv.y, 0.0f); }
-        Point3 DUVW(int chan) { return Point3(duv.x, duv.y, 0.0f); }
-        void DPdUVW(Point3 dP[3], int chan) {}  // dont need bump vectors
-        void GetBGColor(Color &bgcol, Color& transp, BOOL fogBG = TRUE) {}   // returns Background color, bg transparency
-        float Curve() { return curve; }
-
-        // Transform to and from internal space
-        Point3 PointTo(const Point3& p, RefFrame ito) { return p; }
-        Point3 PointFrom(const Point3& p, RefFrame ifrom) { return p; }
-        Point3 VectorTo(const Point3& p, RefFrame ito) { return p; }
-        Point3 VectorFrom(const Point3& p, RefFrame ifrom) { return p; }
-        MaxShadeContext() { doMaps = TRUE; curve = 0.0f; dp = Point3(0.0f, 0.0f, 0.0f); }
     };
 }
 
@@ -192,23 +320,16 @@ namespace
             MaxShadeContext maxsc;
 
             maxsc.mode = SCMODE_NORMAL;
-            maxsc.projType = 0; // 0: perspective, 1: parallel
-            maxsc.curtime = GetCOREInterface()->GetTime();
-            //maxsc.curve = curve;
-            //maxsc.ltPos = plt;
-            //maxsc.view = FNormalize(Point3(plt.x, plt.y, 0.0f));
+            maxsc.proj_type = 0; // 0: perspective, 1: parallel
+            maxsc.cur_time = GetCOREInterface()->GetTime();
             maxsc.uv.x = uv.x;
             maxsc.uv.y = uv.y;
-            //maxsc.scrpos.x = (int)(x + 0.5);
-            //maxsc.scrpos.y = (int)(y + 0.5);
             maxsc.filterMaps = false;
             maxsc.mtlNum = 1;
-            //maxsc.globContext = sc.globContext;
 
             AColor color = m_texmap->EvalColor(maxsc);
 
             return asf::Color3f(color.r, color.g, color.b);
-            //return asf::Color3f(std::sin(uv[0]), std::sin(uv[1]), uv[0] * uv[1]);
         }
 
         Texmap*                 m_texmap;
@@ -269,6 +390,24 @@ namespace
         asf::CanvasProperties   m_properties;
         Texmap*                 m_texmap;
     };
+}
+
+namespace
+{
+    void EnumMtlTree(MtlBase* mb, TimeValue time)
+    {
+        if (IsTex(mb))
+        {
+            Texmap* tm = (Texmap*)mb;
+            tm->LoadMapFiles(time);
+        }
+
+        for (int i = 0, j = mb->NumSubTexmaps(); i < j; i++) {
+            Texmap *st = mb->GetSubTexmap(i);
+            if (st)
+                EnumMtlTree(st, time);
+        }
+    }
 }
 
 std::string wide_to_utf8(const std::wstring& wstr)
@@ -345,64 +484,55 @@ bool is_supported_texture(Texmap* map)
 
     switch (part_a)
     {
-        // Not needed at the moment.
-        //case MIRROR_CLASS_ID:       // Flat mirror.
-        //case FALLOFF_CLASS_ID:      // Falloff texture.
-        //case ACUBIC_CLASS_ID:       // Reflect/refract.
-        //case PLATET_CLASS_ID:       // Plate glass texture.
-
-    case 0x64035FB9:              // Tiles.
+      case 0x64035FB9:              // Tiles.
         if (part_b == 0x69664CDC)
             return true;
         break;
-    case 0x1DEC5B86:              // Gradient Ramp.
+      case 0x1DEC5B86:              // Gradient Ramp.
         if (part_b == 0x43383A51)
             return true;
         break;
-    case 0x72C8577F:              // Swirl.
+      case 0x72C8577F:              // Swirl.
         if (part_b == 0x39A00A1B)
             return true;
         break;
-    case 0x23AD0AE9:              // Perlin Marble.
+      case 0x23AD0AE9:              // Perlin Marble.
         if (part_b == 0x158D7A88)
             return true;
         break;
-    case 0x243E22C6:              // Normal Bump.
+      case 0x243E22C6:              // Normal Bump.
         if (part_b == 0x63F6A014)
             return true;
         break;
-    case 0x93A92749:              // Vector Map.
+      case 0x93A92749:              // Vector Map.
         if (part_b == 0x6B8D470A)
             return true;
         break;
-    case CHECKER_CLASS_ID:
-    case MARBLE_CLASS_ID:
-    case MASK_CLASS_ID:
-    case MIX_CLASS_ID:
-    case NOISE_CLASS_ID:
-    case GRADIENT_CLASS_ID:
-    case TINT_CLASS_ID:
-    case BMTEX_CLASS_ID:
-    case COMPOSITE_CLASS_ID:
-    case RGBMULT_CLASS_ID:
-    case OUTPUT_CLASS_ID:
-    case COLORCORRECTION_CLASS_ID:
-    case 0x0000214:               // WOOD_CLASS_ID
-    case 0x0000218:               // DENT_CLASS_ID
-    case 0x46396cf1:              // PLANET_CLASS_ID
-    case 0x7712634e:              // WATER_CLASS_ID
-    case 0xa845e7c:               // SMOKE_CLASS_ID
-    case 0x62c32b8a:              // SPECKLE_CLASS_ID
-    case 0x90b04f9:               // SPLAT_CLASS_ID
-    case 0x9312fbe:               // STUCCO_CLASS_ID
+      case CHECKER_CLASS_ID:
+      case MARBLE_CLASS_ID:
+      case MASK_CLASS_ID:
+      case MIX_CLASS_ID:
+      case NOISE_CLASS_ID:
+      case GRADIENT_CLASS_ID:
+      case TINT_CLASS_ID:
+      case BMTEX_CLASS_ID:
+      case COMPOSITE_CLASS_ID:
+      case RGBMULT_CLASS_ID:
+      case OUTPUT_CLASS_ID:
+      case COLORCORRECTION_CLASS_ID:
+      case 0x0000214:               // WOOD_CLASS_ID
+      case 0x0000218:               // DENT_CLASS_ID
+      case 0x46396cf1:              // PLANET_CLASS_ID
+      case 0x7712634e:              // WATER_CLASS_ID
+      case 0xa845e7c:               // SMOKE_CLASS_ID
+      case 0x62c32b8a:              // SPECKLE_CLASS_ID
+      case 0x90b04f9:               // SPLAT_CLASS_ID
         return true;
-        break;
-    default:
+      default:
         return false;
-        break;
     }
 
-    return true;
+    return false;
 }
 
 std::string get_root_path()
@@ -460,7 +590,10 @@ std::string insert_texture_and_instance(
     }
     else if (is_supported_texture(texmap))
     {
-        texmap->Update(GetCOREInterface()->GetTime(), FOREVER);
+        TimeValue curr_time = GetCOREInterface()->GetTime();
+
+        texmap->Update(curr_time, FOREVER);
+        EnumMtlTree(texmap, curr_time);
 
         if (!texture_params.strings().exist("color_space"))
         {
@@ -476,6 +609,7 @@ std::string insert_texture_and_instance(
                         texture_name.c_str(), texmap)));
         }
     }
+
     const std::string texture_instance_name = texture_name + "_inst";
     if (base_group.texture_instances().get_by_name(texture_instance_name.c_str()) == nullptr)
     {
