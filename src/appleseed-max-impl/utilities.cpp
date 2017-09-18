@@ -287,7 +287,7 @@ namespace
             const asf::Vector2f&        uv,
             asr::Alpha&                 alpha) const override
         {
-            alpha.set(1.0f);
+            alpha.set(average_value(evaluate_color(uv))); // todo - should add separate source that calculates real alpha.
         }
 
         virtual void evaluate(
@@ -343,6 +343,7 @@ namespace
             : asr::Texture(name, asr::ParamArray())
             , m_texmap(texmap)
         {
+            m_properties = asf::CanvasProperties(1, 1, 1, 1, 3, asf::PixelFormat::PixelFormatUInt8); // Dummy values.
         }
 
         virtual void release() override
