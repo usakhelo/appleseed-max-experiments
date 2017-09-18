@@ -558,56 +558,71 @@ void insert_color(asr::BaseGroup& base_group, const Color& color, const char* na
                 .insert("color", to_color3f(color))));
 }
 
-std::string insert_texture_and_instance(
+std::string insert_bitmap_texture_and_instance(
     asr::BaseGroup& base_group,
     Texmap*         texmap,
     asr::ParamArray texture_params,
     asr::ParamArray texture_instance_params)
 {
     const std::string texture_name = wide_to_utf8(texmap->GetName());
-    if (is_bitmap_texture(texmap))
+    BitmapTex* bitmap_tex = static_cast<BitmapTex*>(texmap);
+
+    const std::string filepath = wide_to_utf8(bitmap_tex->GetMap().GetFullFilePath());
+    texture_params.insert("filename", filepath);
+
+    if (!texture_params.strings().exist("color_space"))
     {
-        BitmapTex* bitmap_tex = static_cast<BitmapTex*>(texmap);
-
-        const std::string filepath = wide_to_utf8(bitmap_tex->GetMap().GetFullFilePath());
-        texture_params.insert("filename", filepath);
-
-        if (!texture_params.strings().exist("color_space"))
-        {
-            if (asf::ends_with(filepath, ".exr"))
-                texture_params.insert("color_space", "linear_rgb");
-            else texture_params.insert("color_space", "srgb");
-        }
-
-        if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
-        {
-            base_group.textures().insert(
-                asr::DiskTexture2dFactory::static_create(
-                    texture_name.c_str(),
-                    texture_params,
-                    asf::SearchPaths()));
-        }
-    }
-    else if (is_supported_texture(texmap))
-    {
-        TimeValue curr_time = GetCOREInterface()->GetTime();
-
-        texmap->Update(curr_time, FOREVER);
-        EnumMtlTree(texmap, curr_time);
-
-        if (!texture_params.strings().exist("color_space"))
-        {
-            // todo: should check max's gamma settings here.
+        if (asf::ends_with(filepath, ".exr"))
             texture_params.insert("color_space", "linear_rgb");
-        }
+        else texture_params.insert("color_space", "srgb");
+    }
 
-        if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
-        {
-            base_group.textures().insert(
-                asf::auto_release_ptr<asr::Texture>(
-                    new MaxProceduralTexture(
-                        texture_name.c_str(), texmap)));
-        }
+    if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
+    {
+        base_group.textures().insert(
+            asr::DiskTexture2dFactory::static_create(
+                texture_name.c_str(),
+                texture_params,
+                asf::SearchPaths()));
+    }
+
+    const std::string texture_instance_name = texture_name + "_inst";
+    if (base_group.texture_instances().get_by_name(texture_instance_name.c_str()) == nullptr)
+    {
+        base_group.texture_instances().insert(
+            asr::TextureInstanceFactory::create(
+                texture_instance_name.c_str(),
+                texture_instance_params,
+                texture_name.c_str()));
+    }
+
+    return texture_instance_name;
+}
+
+std::string insert_max_texture_and_instance(
+    asr::BaseGroup& base_group,
+    Texmap*         texmap,
+    asr::ParamArray texture_params,
+    asr::ParamArray texture_instance_params)
+{
+    const std::string texture_name = wide_to_utf8(texmap->GetName());
+    TimeValue curr_time = GetCOREInterface()->GetTime();
+
+    texmap->Update(curr_time, FOREVER);
+    EnumMtlTree(texmap, curr_time);
+
+    if (!texture_params.strings().exist("color_space"))
+    {
+        // todo: should check max's gamma settings here.
+        texture_params.insert("color_space", "linear_rgb");
+    }
+
+    if (base_group.textures().get_by_name(texture_name.c_str()) == nullptr)
+    {
+        base_group.textures().insert(
+            asf::auto_release_ptr<asr::Texture>(
+                new MaxProceduralTexture(
+                    texture_name.c_str(), texmap)));
     }
 
     const std::string texture_instance_name = texture_name + "_inst";
