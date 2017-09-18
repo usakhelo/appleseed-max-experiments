@@ -259,7 +259,10 @@ namespace
             const asf::Vector2f&        uv,
             float&                      scalar) const override
         {
-            scalar = asf::luminance(evaluate_color(uv));
+            const foundation::Color4f color = evaluate_height(uv);
+            //const foundation::Color3f color = evaluate_color(uv);
+            scalar = color[0];
+            //scalar = asf::luminance(evaluate_color(uv));
         }
 
         virtual void evaluate(
@@ -330,6 +333,23 @@ namespace
             AColor color = m_texmap->EvalColor(maxsc);
 
             return asf::Color3f(color.r, color.g, color.b);
+        }
+
+        asf::Color4f evaluate_height(const asf::Vector2f& uv) const
+        {
+            MaxShadeContext maxsc;
+
+            maxsc.mode = SCMODE_NORMAL;
+            maxsc.proj_type = 0; // 0: perspective, 1: parallel
+            maxsc.cur_time = GetCOREInterface()->GetTime();
+            maxsc.uv.x = uv.x;
+            maxsc.uv.y = uv.y;
+            maxsc.filterMaps = false;
+            maxsc.mtlNum = 1;
+
+            Point3 color = m_texmap->EvalNormalPerturb(maxsc);
+
+            return asf::Color4f(color.x, color.y, color.z, 1.0f);
         }
 
         Texmap*                 m_texmap;
