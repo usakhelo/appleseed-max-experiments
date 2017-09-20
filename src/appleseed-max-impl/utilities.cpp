@@ -229,11 +229,11 @@ namespace
         }
 
       private:
-        Point3 light_pos;   // Position of point in light space.
-        Point3 view;        // Unit vector from light to point, in light space.
-        IPoint2 scr_pos;
-        Point3 dp;
-        float curve;
+        Point3      light_pos;   // Position of point in light space.
+        Point3      view;        // Unit vector from light to point, in light space.
+        IPoint2     scr_pos;
+        Point3      dp;
+        float       curve;
     };
 }
 
@@ -259,10 +259,7 @@ namespace
             const asf::Vector2f&        uv,
             float&                      scalar) const override
         {
-            const foundation::Color4f color = evaluate_height(uv);
-            //const foundation::Color3f color = evaluate_color(uv);
-            scalar = color[0];
-            //scalar = asf::luminance(evaluate_color(uv));
+            scalar = asf::luminance(evaluate_color(uv));
         }
 
         virtual void evaluate(
@@ -290,7 +287,7 @@ namespace
             const asf::Vector2f&        uv,
             asr::Alpha&                 alpha) const override
         {
-            alpha.set(average_value(evaluate_color(uv))); // todo - should add separate source that calculates real alpha.
+            alpha.set(asf::luminance(evaluate_color(uv))); // todo - calculate real alpha from 32bit textures.
         }
 
         virtual void evaluate(
@@ -318,40 +315,24 @@ namespace
         }
 
     private:
+
         asf::Color3f evaluate_color(const asf::Vector2f& uv) const
         {
             MaxShadeContext maxsc;
 
             maxsc.mode = SCMODE_NORMAL;
-            maxsc.proj_type = 0; // 0: perspective, 1: parallel
+            maxsc.proj_type = 0;        // 0: perspective, 1: parallel
             maxsc.cur_time = GetCOREInterface()->GetTime();
             maxsc.uv.x = uv.x;
             maxsc.uv.y = uv.y;
-            maxsc.filterMaps = false;
+            maxsc.filterMaps = false;   // should only filter if bitmap texture
             maxsc.mtlNum = 1;
 
             AColor color = m_texmap->EvalColor(maxsc);
 
             return asf::Color3f(color.r, color.g, color.b);
         }
-
-        asf::Color4f evaluate_height(const asf::Vector2f& uv) const
-        {
-            MaxShadeContext maxsc;
-
-            maxsc.mode = SCMODE_NORMAL;
-            maxsc.proj_type = 0; // 0: perspective, 1: parallel
-            maxsc.cur_time = GetCOREInterface()->GetTime();
-            maxsc.uv.x = uv.x;
-            maxsc.uv.y = uv.y;
-            maxsc.filterMaps = false;
-            maxsc.mtlNum = 1;
-
-            Point3 color = m_texmap->EvalNormalPerturb(maxsc);
-
-            return asf::Color4f(color.x, color.y, color.z, 1.0f);
-        }
-
+        
         Texmap*                 m_texmap;
     };
 
@@ -363,7 +344,7 @@ namespace
             : asr::Texture(name, asr::ParamArray())
             , m_texmap(texmap)
         {
-            m_properties = asf::CanvasProperties(1, 1, 1, 1, 3, asf::PixelFormat::PixelFormatUInt8); // Dummy values.
+            m_properties = asf::CanvasProperties(512, 512, 64, 64, 3, asf::PixelFormat::PixelFormatUInt8); // Dummy values.
         }
 
         virtual void release() override

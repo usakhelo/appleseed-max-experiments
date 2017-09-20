@@ -237,6 +237,10 @@ bool RendererSettings::save(ISave* isave) const
         success &= write<bool>(isave, m_low_priority_mode);
         isave->EndChunk();
 
+        isave->BeginChunk(ChunkSettingsSystemUseMaxProceduralMaps);
+        success &= write<bool>(isave, m_use_max_procedural_maps);
+        isave->EndChunk();
+        
     isave->EndChunk();
 
     return success;
@@ -455,6 +459,10 @@ IOResult RendererSettings::load_system_settings(ILoad* iload)
 
           case ChunkSettingsSystemLowPriorityMode:
             result = read<bool>(iload, &m_low_priority_mode);
+            break;
+
+          case ChunkSettingsSystemUseMaxProceduralMaps:
+            result = read<bool>(iload, &m_use_max_procedural_maps);
             break;
         }
 

@@ -899,7 +899,8 @@ asf::auto_release_ptr<asr::Material> AppleseedDisneyMtl::create_max_material(
         switch (m_bump_method)
         {
           case 0:
-            material_params.insert("bump_amplitude", m_bump_amount);
+              material_params.insert("bump_amplitude", m_bump_amount);
+              material_params.insert("bump_offset", 0.0009765625f);
             break;
 
           case 1:
