@@ -259,7 +259,7 @@ namespace
             const asf::Vector2f&        uv,
             float&                      scalar) const override
         {
-            scalar = asf::luminance(evaluate_color(uv));
+            scalar = evaluate_float(uv);
         }
 
         virtual void evaluate(
@@ -267,7 +267,8 @@ namespace
             const asf::Vector2f&        uv,
             asf::Color3f&               linear_rgb) const override
         {
-            linear_rgb = evaluate_color(uv);
+            const asf::Color4f color = evaluate_color(uv);
+            linear_rgb = asf::Color3f(color.r, color.g, color.b);
         }
 
         virtual void evaluate(
@@ -276,10 +277,10 @@ namespace
             asr::Spectrum&              spectrum) const override
         {
             DbgAssert(spectrum.size() == 3);
-            const asf::Color3f linear_rgb = evaluate_color(uv);
-            spectrum[0] = linear_rgb[0];
-            spectrum[1] = linear_rgb[1];
-            spectrum[2] = linear_rgb[2];
+            const asf::Color4f color = evaluate_color(uv);
+            spectrum[0] = color[0];
+            spectrum[1] = color[1];
+            spectrum[2] = color[2];
         }
 
         virtual void evaluate(
@@ -287,7 +288,7 @@ namespace
             const asf::Vector2f&        uv,
             asr::Alpha&                 alpha) const override
         {
-            alpha.set(asf::luminance(evaluate_color(uv))); // todo - calculate real alpha from 32bit textures.
+            alpha.set(evaluate_float(uv));
         }
 
         virtual void evaluate(
@@ -296,8 +297,9 @@ namespace
             asf::Color3f&               linear_rgb,
             asr::Alpha&                 alpha) const override
         {
-            linear_rgb = evaluate_color(uv);
-            alpha.set(1.0f);
+            const asf::Color4f color = evaluate_color(uv);
+            linear_rgb = asf::Color3f(color.r, color.g, color.b);
+            alpha.set(color.a);
         }
 
         virtual void evaluate(
@@ -307,16 +309,16 @@ namespace
             asr::Alpha&                 alpha) const override
         {
             DbgAssert(spectrum.size() == 3);
-            const asf::Color3f linear_rgb = evaluate_color(uv);
-            spectrum[0] = linear_rgb[0];
-            spectrum[1] = linear_rgb[1];
-            spectrum[2] = linear_rgb[2];
-            alpha.set(1.0f);
+            const asf::Color4f color = evaluate_color(uv);
+            spectrum[0] = color[0];
+            spectrum[1] = color[1];
+            spectrum[2] = color[2];
+            alpha.set(color[3]);
         }
 
     private:
 
-        asf::Color3f evaluate_color(const asf::Vector2f& uv) const
+        float evaluate_float(const asf::Vector2f& uv) const
         {
             MaxShadeContext maxsc;
 
@@ -325,12 +327,27 @@ namespace
             maxsc.cur_time = GetCOREInterface()->GetTime();
             maxsc.uv.x = uv.x;
             maxsc.uv.y = uv.y;
-            maxsc.filterMaps = false;   // should only filter if bitmap texture
+            maxsc.filterMaps = false;
+            maxsc.mtlNum = 1;
+
+            return m_texmap->EvalMono(maxsc);
+        }
+
+        asf::Color4f evaluate_color(const asf::Vector2f& uv) const
+        {
+            MaxShadeContext maxsc;
+
+            maxsc.mode = SCMODE_NORMAL;
+            maxsc.proj_type = 0;        // 0: perspective, 1: parallel
+            maxsc.cur_time = GetCOREInterface()->GetTime();
+            maxsc.uv.x = uv.x;
+            maxsc.uv.y = uv.y;
+            maxsc.filterMaps = false;
             maxsc.mtlNum = 1;
 
             AColor color = m_texmap->EvalColor(maxsc);
 
-            return asf::Color3f(color.r, color.g, color.b);
+            return asf::Color4f(color.r, color.g, color.b, color.a);
         }
         
         Texmap*                 m_texmap;
@@ -396,18 +413,18 @@ namespace
 
 namespace
 {
-    void EnumMtlTree(MtlBase* mb, TimeValue time)
+    void EnumMtlTree(MtlBase* mat_base, TimeValue time)
     {
-        if (IsTex(mb))
+        if (IsTex(mat_base))
         {
-            Texmap* tm = (Texmap*)mb;
-            tm->LoadMapFiles(time);
+            Texmap* tex_map = (Texmap*)mat_base;
+            tex_map->LoadMapFiles(time);
         }
 
-        for (int i = 0, j = mb->NumSubTexmaps(); i < j; i++) {
-            Texmap *st = mb->GetSubTexmap(i);
-            if (st)
-                EnumMtlTree(st, time);
+        for (int i = 0, j = mat_base->NumSubTexmaps(); i < j; i++) {
+            Texmap* sub_tex = mat_base->GetSubTexmap(i);
+            if (sub_tex)
+                EnumMtlTree(sub_tex, time);
         }
     }
 }
@@ -615,7 +632,7 @@ std::string insert_max_texture_and_instance(
 
     if (!texture_params.strings().exist("color_space"))
     {
-        // todo: should check max's gamma settings here.
+        // todo: should probably check max's gamma settings here.
         texture_params.insert("color_space", "linear_rgb");
     }
 

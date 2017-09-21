@@ -134,6 +134,8 @@ class AppleseedDisneyMtl
         renderer::Assembly& assembly,
         const char*         name,
         bool                use_max_source) override;
+
+  private:
     foundation::auto_release_ptr<renderer::Material> create_universal_material(
         renderer::Assembly& assembly,
         const char*         name);
@@ -141,7 +143,6 @@ class AppleseedDisneyMtl
         renderer::Assembly& assembly,
         const char*         name);
 
-  private:
     IParamBlock2*   m_pblock;
     Interval        m_params_validity;
     Color           m_base_color;

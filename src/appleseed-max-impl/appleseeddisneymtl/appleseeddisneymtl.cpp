@@ -812,11 +812,6 @@ asf::auto_release_ptr<asr::Material> AppleseedDisneyMtl::create_max_material(
             bsdf_params.insert("base_color", color_name);
         }
 
-        // Subsurface.
-        //if (is_supported_texture(m_specular_texmap))
-        //    bsdf_params.insert("subsurface", insert_bitmap_texture_and_instance(assembly, m_specular_texmap));
-        //else bsdf_params.insert("subsurface", m_specular / 100.0f);
-
         // Specular Tint.
         if (is_supported_texture(m_specular_tint_texmap))
             bsdf_params.insert("specular_tint", insert_max_texture_and_instance(assembly, m_specular_tint_texmap));
@@ -900,7 +895,7 @@ asf::auto_release_ptr<asr::Material> AppleseedDisneyMtl::create_max_material(
         {
           case 0:
               material_params.insert("bump_amplitude", m_bump_amount);
-              material_params.insert("bump_offset", 0.0009765625f);
+              material_params.insert("bump_offset", 0.0009765625f);     // 0.5/512 - value that should work for non-image sources
             break;
 
           case 1:
