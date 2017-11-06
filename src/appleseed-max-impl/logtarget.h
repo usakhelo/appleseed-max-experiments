@@ -34,10 +34,14 @@
 // Standard headers.
 #include <cstddef>
 
+// Forward declarations.
+class IRenderMessageManager;
+
 class LogTarget
   : public foundation::ILogTarget
 {
   public:
+    LogTarget();
     virtual void release() override;
 
     virtual void write(
@@ -46,4 +50,8 @@ class LogTarget
         const size_t                            line,
         const char*                             header,
         const char*                             message) override;
+  
+private:
+    IRenderMessageManager* m_log_manager;
+
 };

@@ -43,6 +43,7 @@
 // 3ds Max headers.
 #include <log.h>
 #include <max.h>
+#include <Rendering/IRenderMessageManager.h>
 
 // Standard headers.
 #include <string>
@@ -113,6 +114,11 @@ void LogTarget::release()
     delete this;
 }
 
+LogTarget::LogTarget()
+    : m_log_manager(GetRenderMessageManager())
+{
+}
+
 void LogTarget::write(
     const asf::LogMessage::Category category,
     const char*                     file,
@@ -120,31 +126,45 @@ void LogTarget::write(
     const char*                     header,
     const char*                     message)
 {
-    DWORD type;
+    IRenderMessageManager::MessageType log_type;
+    DWORD system_type;
+    IRenderMessageManager::MessageSource source = IRenderMessageManager::MessageSource::kSource_ProductionRenderer;
+
     switch (category)
     {
-      case asf::LogMessage::Debug: type = SYSLOG_DEBUG; break;
-      case asf::LogMessage::Info: type = SYSLOG_INFO; break;
-      case asf::LogMessage::Warning: type = SYSLOG_WARN; break;
+      case asf::LogMessage::Debug:
+        log_type = IRenderMessageManager::MessageType::kType_Debug;
+        system_type = SYSLOG_DEBUG;
+        break;
+      case asf::LogMessage::Info:
+        log_type = IRenderMessageManager::MessageType::kType_Info;
+        system_type = SYSLOG_INFO;
+        break;
+      case asf::LogMessage::Warning:
+        log_type = IRenderMessageManager::MessageType::kType_Warning;
+        system_type = SYSLOG_WARN;
+        break;
       case asf::LogMessage::Error:
+        log_type = IRenderMessageManager::MessageType::kType_Error;
+        system_type = SYSLOG_WARN;
       case asf::LogMessage::Fatal:
       default:
-        type = SYSLOG_ERROR;
+        log_type = IRenderMessageManager::MessageType::kType_Fatal;
+        system_type = SYSLOG_ERROR;
         break;
     }
 
     std::vector<std::string> lines;
     asf::split(message, "\n", lines);
 
-    if (is_main_thread())
-        emit_message(type, lines);
-    else
+    for (auto line : lines)
     {
-        push_message(type, lines);
-        PostMessage(
-            GetCOREInterface()->GetMAXHWnd(),
-            WM_TRIGGER_CALLBACK,
-            reinterpret_cast<WPARAM>(emit_pending_messages),
-            0);
+        m_log_manager->LogMessage(
+            source,
+            log_type,
+            ( system_type | SYSLOG_BROADCAST),
+            utf8_to_wide(message).c_str());
     }
+    m_log_manager->FlushLogFile(source);
 }
+
