@@ -133,7 +133,7 @@ class AppleseedBlendMtl
     virtual void SetSubMtl(int i, Mtl *m) override;// { }
     //virtual int VPDisplaySubMtl() override;// { return -1; }
 
-    //CoreExport virtual MSTR GetSubMtlSlotName(int i);
+    virtual MSTR GetSubMtlSlotName(int i) override;
     //CoreExport MSTR GetSubMtlTVName(int i);
     //CoreExport void CopySubMtl(HWND hwnd, int ifrom, int ito);
 

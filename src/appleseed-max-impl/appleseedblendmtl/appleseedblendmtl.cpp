@@ -141,12 +141,12 @@ namespace
         
         // --- Parameters specifications for Blend rollup ---
 
-        ParamIdBaseMtl, L"base_material", TYPE_MTL, 0, IDS_MATERIAL_BASE,
+        ParamIdBaseMtl, L"base_material", TYPE_MTL, P_SUBANIM, IDS_MATERIAL_BASE,
             p_submtlno, MaterialBase,
             p_ui, TYPE_MTLBUTTON, IDC_MTLBTN_BASE,
         p_end,
 
-        ParamIdCoatMtl1, L"coat_material_1", TYPE_MTL, 0, IDS_MATERIAL_COAT1,
+        ParamIdCoatMtl1, L"coat_material_1", TYPE_MTL, P_SUBANIM, IDS_MATERIAL_COAT1,
             p_submtlno, MaterialCoat1,
             p_ui, TYPE_MTLBUTTON, IDC_MTLBTN_COAT_1,
         p_end,
@@ -483,6 +483,19 @@ void AppleseedBlendMtl::SetSubMtl(int i, Mtl* m)
       case 1:
         m_pblock->SetValue(ParamIdCoatMtl1, 0, m);
         break;
+    }
+}
+
+MSTR AppleseedBlendMtl::GetSubMtlSlotName(int i)
+{
+    switch (i)
+    {
+      case 0:
+        return L"Base Material";
+      case 1:
+        return L"Coat Material 1";
+      default:
+        return L"";
     }
 }
 
