@@ -81,19 +81,13 @@ namespace
     enum { ParamBlockIdBlendMtl };
     enum { ParamBlockRefBlendMtl };
 
-    enum ParamMapId
-    {
-        ParamMapIdBlend,
-    };
-
     enum ParamId
     {
         // Changing these value WILL break compatibility.
-        ParamIdBaseMtl              = 0,
-        ParamIdCoatMtl1             = 1,
-        ParamIdCoatMixAmount1       = 2,
-        ParamIdCoatMixColor1        = 3,
-        ParamIdCoatMask1            = 4
+        ParamIdMtl              = 0,
+        ParamIdMaskTex          = 1,
+        ParamIdMaskAmount       = 2,
+        ParamIdMixColor         = 3,
     };
 
     enum MtlId
@@ -101,24 +95,61 @@ namespace
         // Changing these value WILL break compatibility.
         MaterialBase                = 0,
         MaterialCoat1               = 1,
+        MaterialCoat2               = 2,
+        MaterialCoat3               = 3,
+        MaterialCoat4               = 4,
+        MaterialCoat5               = 5,
+        MaterialCoat6               = 6,
+        MaterialCoat7               = 7,
+        MaterialCoat8               = 8,
+        MaterialCoat9               = 9,
+        MaterialCoat10              = 10,
         MtlCount                 // keep last
     };
 
     enum TexmapId
     {
         // Changing these value WILL break compatibility.
-        TexmapMask1 = 0,
+        TexmapMask1     = 0,
+        TexmapMask2     = 1,
+        TexmapMask3     = 2,
+        TexmapMask4     = 3,
+        TexmapMask5     = 4,
+        TexmapMask6     = 5,
+        TexmapMask7     = 6,
+        TexmapMask8     = 7,
+        TexmapMask9     = 8,
+        TexmapMask10    = 9,
         TexmapCount                 // keep last
     };
 
-    const MSTR g_texmap_slot_names[TexmapCount] =
+    const MSTR g_texmap_slot_names[10] =
     {
-        L"Mask1",
+        L"Mask 1",
+        L"Mask 2",
+        L"Mask 3",
+        L"Mask 4",
+        L"Mask 5",
+        L"Mask 6",
+        L"Mask 7",
+        L"Mask 8",
+        L"Mask 9",
+        L"Mask 10",
     };
 
-    const ParamId g_texmap_id_to_param_id[TexmapCount] =
+    const MSTR g_material_slot_names[11] =
     {
-        ParamIdCoatMask1,
+        L"Base Material",
+        L"Coat Material 1",
+        L"Coat Material 2",
+        L"Coat Material 3",
+        L"Coat Material 4",
+        L"Coat Material 5",
+        L"Coat Material 6",
+        L"Coat Material 7",
+        L"Coat Material 8",
+        L"Coat Material 9",
+        L"Coat Material 10",
     };
 
     ParamBlockDesc2 g_block_desc(
@@ -141,20 +172,38 @@ namespace
         
         // --- Parameters specifications for Blend rollup ---
 
-        ParamIdBaseMtl, L"base_material", TYPE_MTL, P_SUBANIM, IDS_MATERIAL_BASE,
-            p_submtlno, MaterialBase,
-            p_ui, TYPE_MTLBUTTON, IDC_MTLBTN_BASE,
+        ParamIdMtl, L"material_list", TYPE_MTL_TAB, 3, P_SUBANIM | P_SHORT_LABELS, IDS_MATERIAL,
+            p_submtlno, 0,
+            p_ui,   TYPE_MTLBUTTON,     IDC_MTLBTN_BASE,IDC_MTLBTN_COAT_1, IDC_MTLBTN_COAT_2, 
+                                        /*IDC_MTLBTN_COAT_3, IDC_MTLBTN_COAT_4, IDC_MTLBTN_COAT_5,
+                                        IDC_MTLBTN_COAT_6, IDC_MTLBTN_COAT_7, IDC_MTLBTN_COAT_8,
+                                        IDC_MTLBTN_COAT_9, IDC_MTLBTN_COAT_10,*/
         p_end,
 
-        ParamIdCoatMtl1, L"coat_material_1", TYPE_MTL, P_SUBANIM, IDS_MATERIAL_COAT1,
-            p_submtlno, MaterialCoat1,
-            p_ui, TYPE_MTLBUTTON, IDC_MTLBTN_COAT_1,
+        ParamIdMaskTex, L"mask_list", TYPE_TEXMAP_TAB, 2, P_SUBANIM | P_SHORT_LABELS, IDS_MASK_TEXTURE,
+            p_subtexno, 0,
+            p_ui,   TYPE_TEXMAPBUTTON,  IDC_TEXBTN_MASK_1, IDC_TEXBTN_MASK_2, /*IDC_TEXBTN_MASK_3,
+                                        IDC_TEXBTN_MASK_4, IDC_TEXBTN_MASK_5, IDC_TEXBTN_MASK_6,
+                                        IDC_TEXBTN_MASK_7, IDC_TEXBTN_MASK_8, IDC_TEXBTN_MASK_9,
+                                        IDC_TEXBTN_MASK_10,*/
         p_end,
 
-        ParamIdCoatMixAmount1, L"coat_mix_amount_1", TYPE_FLOAT, P_ANIMATABLE, IDS_MIX_AMOUNT1,
+        
+        ParamIdMaskAmount, L"texture_amount_list", TYPE_FLOAT_TAB, 2, P_ANIMATABLE, IDS_MASK_AMOUNT,
             p_default, 50.0f,
             p_range, 0.0f, 100.0f,
-            p_ui, TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_AMOUNT_1, IDC_SPIN_AMOUNT_1, 5.0f,
+            p_ui,   TYPE_SPINNER, EDITTYPE_FLOAT,
+                        IDC_EDIT_AMOUNT_1, IDC_SPIN_AMOUNT_1, 
+                        IDC_EDIT_AMOUNT_2, IDC_SPIN_AMOUNT_2,
+                        /*IDC_EDIT_AMOUNT_3, IDC_SPIN_AMOUNT_3,
+                        IDC_EDIT_AMOUNT_4, IDC_SPIN_AMOUNT_4,
+                        IDC_EDIT_AMOUNT_5, IDC_SPIN_AMOUNT_5,
+                        IDC_EDIT_AMOUNT_6, IDC_SPIN_AMOUNT_6,
+                        IDC_EDIT_AMOUNT_7, IDC_SPIN_AMOUNT_7,
+                        IDC_EDIT_AMOUNT_8, IDC_SPIN_AMOUNT_8,
+                        IDC_EDIT_AMOUNT_9, IDC_SPIN_AMOUNT_9,
+                        IDC_EDIT_AMOUNT_10, IDC_SPIN_AMOUNT_10,*/
+            0.1f,
         p_end,
 
         // --- The end ---
@@ -286,7 +335,7 @@ RefTargetHandle AppleseedBlendMtl::Clone(RemapDir& remap)
 
 int AppleseedBlendMtl::NumSubTexmaps()
 {
-    return TexmapCount;
+    return 2; // TexmapCount;
 }
 
 Texmap* AppleseedBlendMtl::GetSubTexmap(int i)
@@ -294,18 +343,14 @@ Texmap* AppleseedBlendMtl::GetSubTexmap(int i)
     Texmap* texmap;
     Interval valid;
 
-    const auto texmap_id = static_cast<TexmapId>(i);
-    const auto param_id = g_texmap_id_to_param_id[texmap_id];
-    m_pblock->GetValue(param_id, 0, texmap, valid);
+    m_pblock->GetValue(ParamIdMaskTex, 0, texmap, valid, i);
 
     return texmap;
 }
 
 void AppleseedBlendMtl::SetSubTexmap(int i, Texmap* texmap)
 {
-    const auto texmap_id = static_cast<TexmapId>(i);
-    const auto param_id = g_texmap_id_to_param_id[texmap_id];
-    m_pblock->SetValue(param_id, 0, texmap);
+    m_pblock->SetValue(ParamIdMaskTex, 0, texmap, i);
 }
 
 int AppleseedBlendMtl::MapSlotType(int i)
@@ -455,48 +500,25 @@ void AppleseedBlendMtl::Shade(ShadeContext& sc)
 
 int AppleseedBlendMtl::NumSubMtls()
 {
-    return 2;
+    return 3; // MtlCount;
 }
 
 Mtl* AppleseedBlendMtl::GetSubMtl(int i)
 {
     Mtl* mtl = nullptr;
-    switch (i)
-    {
-    case 0:
-        m_pblock->GetValue(ParamIdBaseMtl, 0, mtl, FOREVER);
-        break;
-    case 1:
-        m_pblock->GetValue(ParamIdCoatMtl1, 0, mtl, FOREVER);
-        break;
-    }
+    m_pblock->GetValue(ParamIdMtl, 0, mtl, FOREVER, i);
     return mtl;
 }
 
 void AppleseedBlendMtl::SetSubMtl(int i, Mtl* m)
 {
-    switch (i)
-    {
-      case 0:
-        m_pblock->SetValue(ParamIdBaseMtl, 0, m);
-        break;
-      case 1:
-        m_pblock->SetValue(ParamIdCoatMtl1, 0, m);
-        break;
-    }
+    m_pblock->SetValue(ParamIdMtl, 0, m, i);
 }
 
 MSTR AppleseedBlendMtl::GetSubMtlSlotName(int i)
 {
-    switch (i)
-    {
-      case 0:
-        return L"Base Material";
-      case 1:
-        return L"Coat Material 1";
-      default:
-        return L"";
-    }
+    const auto mtl_id = static_cast<MtlId>(i);
+    return g_material_slot_names[mtl_id];
 }
 
 int AppleseedBlendMtl::get_sides() const
@@ -524,7 +546,75 @@ asf::auto_release_ptr<asr::Material> AppleseedBlendMtl::create_osl_material(
     asr::Assembly&  assembly,
     const char*     name)
 {
-    return asr::OSLMaterialFactory().create(name, asr::ParamArray());
+    Mtl* mtl1 = GetSubMtl(0);
+    Mtl* mtl2 = GetSubMtl(1);
+    
+    if (!mtl1 || !mtl2)
+        return asr::OSLMaterialFactory().create(name, asr::ParamArray());
+
+    auto appleseed_mtl1 =
+        static_cast<IAppleseedMtl*>(mtl1->GetInterface(IAppleseedMtl::interface_id()));
+
+    auto appleseed_mtl2 =
+        static_cast<IAppleseedMtl*>(mtl2->GetInterface(IAppleseedMtl::interface_id()));
+
+    if (!appleseed_mtl1 || !appleseed_mtl2)
+        return asr::OSLMaterialFactory().create(name, asr::ParamArray());
+
+    std::string mtl1_name =
+        make_unique_name(assembly.materials(), wide_to_utf8(mtl1->GetName()) + "_mat");
+    auto proj_mtl1 = appleseed_mtl1->create_material(assembly, mtl1_name.c_str(), false);
+
+    std::string mtl2_name =
+        make_unique_name(assembly.materials(), wide_to_utf8(mtl2->GetName()) + "_mat");
+    auto proj_mtl2 = appleseed_mtl2->create_material(assembly, mtl2_name.c_str(), false);
+
+    asr::ShaderGroup* sh_grp_mtl1 = assembly.shader_groups().get_by_name(asf::format("{0}_{1}", mtl1_name, "shader_group").c_str());
+    asr::ShaderGroup* sh_grp_mtl2 = assembly.shader_groups().get_by_name(asf::format("{0}_{1}", mtl2_name, "shader_group").c_str());
+
+    if (!sh_grp_mtl1 || !sh_grp_mtl2)
+        return asr::OSLMaterialFactory().create(name, asr::ParamArray());
+
+    asr::Shader* sh_mtl1 = sh_grp_mtl1->shaders().get_by_name(mtl1_name.c_str());
+    asr::Shader* sh_mtl2 = sh_grp_mtl2->shaders().get_by_name(mtl2_name.c_str());
+
+    if (!sh_mtl1 || !sh_mtl2)
+        return asr::OSLMaterialFactory().create(name, asr::ParamArray());
+
+    auto shader_group_name = make_unique_name(assembly.shader_groups(), std::string(name) + "_shader_group");
+    auto shader_group = asr::ShaderGroupFactory::create(shader_group_name.c_str());
+
+    // add mtl1 and mtl2 shaders to shader group
+    // and connect their output to surface inputs
+
+    auto mtl1_layer_name = asf::format("{0}_{1}_mtl_layer", mtl1_name, "m1");
+    shader_group->add_shader("shader", mtl1_name.c_str(), mtl1_layer_name.c_str(), asr::ParamArray());
+
+    auto mtl2_layer_name = asf::format("{0}_{1}_mtl_layer", mtl2_name, "m2");
+    shader_group->add_shader("shader", mtl2_name.c_str(), mtl2_layer_name.c_str(), asr::ParamArray());
+
+    shader_group->add_connection(
+        mtl1_layer_name.c_str(), "Ci",
+        name, "m1");
+
+    shader_group->add_connection(
+        mtl2_layer_name.c_str(), "Ci",
+        name, "m2");
+
+    // Must come last.
+    shader_group->add_shader("surface", "as_max_blend_material", name,
+        asr::ParamArray()
+            .insert("MixAmount", fmt_osl_expr(.5)));
+    assembly.shader_groups().insert(shader_group);
+
+    //
+    // Material.
+    //
+
+    asr::ParamArray material_params;
+    material_params.insert("osl_surface", shader_group_name);
+
+    return asr::OSLMaterialFactory().create(name, material_params);
 }
 
 asf::auto_release_ptr<asr::Material> AppleseedBlendMtl::create_builtin_material(

@@ -5,6 +5,7 @@
 #define IDD_FORMVIEW_PARAMS             9000
 #define IDS_FORMVIEW_PARAMS_TITLE       9001
 #define IDC_LABEL_BASE_MTL              9002
+#define IDS_MASK_AMOUNT                 9002
 #define IDC_MTLBTN_BASE                 9003
 #define IDC_LABEL_COAT_1                9004
 #define IDC_MTLBTN_COAT_1               9005
@@ -69,8 +70,11 @@
 #define IDC_SPIN_AMOUNT_10              9064
 #define IDC_COLOR_AMOUNT_10             9065
 #define IDS_MIX_AMOUNT1                 9101
+#define IDS_MIX_AMOUNT                  9101
 #define IDS_MATERIAL_BASE               9102
+#define IDS_MATERIAL                    9102
 #define IDS_MATERIAL_COAT1              9103
+#define IDS_MASK_TEXTURE                9103
 
 // Next default values for new objects
 // 
