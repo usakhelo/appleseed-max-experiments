@@ -45,6 +45,8 @@
 #include "renderer/api/scene.h"
 #include "renderer/api/shadergroup.h"
 #include "renderer/api/utility.h"
+#include "renderer/modeling/shadergroup/shader.h"
+#include "renderer/modeling/shadergroup/shaderconnection.h"
 
 // appleseed.foundation headers.
 #include "foundation/image/colorspace.h"
@@ -370,7 +372,27 @@ void AppleseedBlendMtl::Update(TimeValue t, Interval& valid)
     {
         m_params_validity.SetInfinite();
 
-        NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
+        int mat_count = m_pblock->Count(ParamIdMtl);
+        int tex_count = m_pblock->Count(ParamIdMaskTex);
+        if (mat_count > 0)
+        {
+            Mtl* mat = nullptr;
+            for (int i = 0; i < mat_count; ++i)
+            {
+                m_pblock->GetValue(ParamIdMtl, t, mat, valid, i);
+                mat->Update(t, valid);
+            }
+        }
+        if (tex_count > 0)
+        {
+            Texmap* tex = nullptr;
+            for (int i = 0; i < mat_count; ++i)
+            {
+                m_pblock->GetValue(ParamIdMaskTex, t, tex, valid, i);
+                tex->Update(t, valid);
+            }
+        }
+        NotifyDependents(FOREVER, PART_ALL, REFMSG_DISPLAY_MATERIAL_CHANGE);
     }
 
     valid &= m_params_validity;
@@ -575,31 +597,29 @@ asf::auto_release_ptr<asr::Material> AppleseedBlendMtl::create_osl_material(
     if (!sh_grp_mtl1 || !sh_grp_mtl2)
         return asr::OSLMaterialFactory().create(name, asr::ParamArray());
 
-    asr::Shader* sh_mtl1 = sh_grp_mtl1->shaders().get_by_name(mtl1_name.c_str());
-    asr::Shader* sh_mtl2 = sh_grp_mtl2->shaders().get_by_name(mtl2_name.c_str());
-
-    if (!sh_mtl1 || !sh_mtl2)
-        return asr::OSLMaterialFactory().create(name, asr::ParamArray());
-
     auto shader_group_name = make_unique_name(assembly.shader_groups(), std::string(name) + "_shader_group");
     auto shader_group = asr::ShaderGroupFactory::create(shader_group_name.c_str());
 
-    // add mtl1 and mtl2 shaders to shader group
-    // and connect their output to surface inputs
+    for (const auto& shader : sh_grp_mtl1->shaders())
+        shader_group->add_shader(shader.get_type(), shader.get_shader(), shader.get_layer(), shader.get_parameters());
 
-    auto mtl1_layer_name = asf::format("{0}_{1}_mtl_layer", mtl1_name, "m1");
-    shader_group->add_shader("shader", mtl1_name.c_str(), mtl1_layer_name.c_str(), asr::ParamArray());
+    for (const auto& shader : sh_grp_mtl2->shaders())
+        shader_group->add_shader(shader.get_type(), shader.get_shader(), shader.get_layer(), shader.get_parameters());
 
-    auto mtl2_layer_name = asf::format("{0}_{1}_mtl_layer", mtl2_name, "m2");
-    shader_group->add_shader("shader", mtl2_name.c_str(), mtl2_layer_name.c_str(), asr::ParamArray());
+    for (const auto& conn : sh_grp_mtl1->shader_connections())
+        shader_group->add_connection(conn.get_src_layer(), conn.get_src_param(), conn.get_dst_layer(), conn.get_dst_param());
 
-    shader_group->add_connection(
-        mtl1_layer_name.c_str(), "Ci",
-        name, "m1");
+    for (const auto& conn : sh_grp_mtl2->shader_connections())
+        shader_group->add_connection(conn.get_src_layer(), conn.get_src_param(), conn.get_dst_layer(), conn.get_dst_param());
 
-    shader_group->add_connection(
-        mtl2_layer_name.c_str(), "Ci",
-        name, "m2");
+    // copy all the shaders from shader groups of mtl1 and mtl2 to blend shader group
+    // add blender shader after that
+    // copy all the connections from shader groups of mtl1 and mtl2 to blend shader group
+    // add connection from mtl1 and mtl2 shader outputs to the blend shader input
+
+    shader_group->add_connection(mtl1_name.c_str(), "Ci", name, "m1");
+
+    shader_group->add_connection(mtl2_name.c_str(), "Ci", name, "m2");
 
     // Must come last.
     shader_group->add_shader("surface", "as_max_blend_material", name,

@@ -63,7 +63,7 @@ BEGIN
                     "SpinnerControl",0x0,205,29,7,10
     CONTROL         "Mix Amount Color Swatch",IDC_COLOR_AMOUNT_1,"ColorSwatch",WS_TABSTOP,100,29,10,10
     LTEXT           "1:",IDC_LABEL_COAT_1,9,30,8,8
-    LTEXT           "Coat Materials:",IDC_LABEL_BASE_MTL2,18,20,48,8
+    LTEXT           "Layers:",IDC_LABEL_BASE_MTL2,18,20,24,8
     LTEXT           "Blend Amount:",IDC_LABEL_BASE_MTL3,100,20,52,8
     CONTROL         "Mask Map 1",IDC_TEXBTN_MASK_2,"CustButton",WS_TABSTOP,112,42,65,10
     CONTROL         "Coat Material 1",IDC_MTLBTN_COAT_2,"CustButton",WS_TABSTOP,18,42,79,10
@@ -81,7 +81,7 @@ BEGIN
     CONTROL         "Mix Amount Color Swatch",IDC_COLOR_AMOUNT_3,"ColorSwatch",WS_TABSTOP,100,54,10,10
     CONTROL         "Mask Map 1",IDC_TEXBTN_MASK_4,"CustButton",WS_TABSTOP,112,66,65,10
     CONTROL         "Coat Material 1",IDC_MTLBTN_COAT_4,"CustButton",WS_TABSTOP,18,66,79,10
-    LTEXT           " 4:",IDC_LABEL_COAT_4,7,67,8,8
+    LTEXT           " 4:",IDC_LABEL_COAT_4,7,67,9,8
     CONTROL         "Coat Amount",IDC_EDIT_AMOUNT_4,"CustEdit",WS_TABSTOP,179,66,25,10
     CONTROL         "Vertical Angle Spinner",IDC_SPIN_AMOUNT_4,
                     "SpinnerControl",0x0,205,66,7,10
