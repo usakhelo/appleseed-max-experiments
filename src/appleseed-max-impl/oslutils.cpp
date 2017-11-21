@@ -41,7 +41,10 @@
 
 // 3ds Max Headers.
 #include <bitmap.h>
+#include <imtl.h>
+#include <maxapi.h>
 #include <stdmat.h>
+
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -97,13 +100,53 @@ void connect_color_texture(
     Texmap*             texmap,
     const Color         multiplier)
 {
-    if (is_bitmap_texture(texmap) && !is_linear_texture(static_cast<BitmapTex*>(texmap)))
+    if (!is_bitmap_texture(texmap))
+        return;
+
+    asr::ParamArray tex_params;
+
+    UVGen* uv_gen = texmap->GetTheUVGen();
+    if (uv_gen && uv_gen->IsStdUVGen())
+    {
+        StdUVGen* std_uv = static_cast<StdUVGen*>(uv_gen);
+        auto time = GetCOREInterface()->GetTime();
+        // Assume that all the textures are in texture mode texmap->MapSlotType() == MAPSLOT_TEXTURE and static_cast<StdUVGen*>(uv_gen)->GetCoordMapping() == UVMAP_EXPLICIT
+
+        float u_tiling = std_uv->GetUScl(time);
+        float v_tiling = std_uv->GetVScl(time);
+        float u_offset = std_uv->GetUOffs(time);
+        float v_offset = std_uv->GetVOffs(time);
+
+        int tiling = std_uv->GetTextureTiling();
+
+        if (tiling & U_WRAP)
+            tex_params.insert("UWrap", fmt_osl_expr("periodic"));
+        else if (tiling & U_MIRROR)
+            tex_params.insert("UWrap", fmt_osl_expr("mirror"));
+        else
+            tex_params.insert("UWrap", fmt_osl_expr("clamp"));
+
+        if (tiling & V_WRAP)
+            tex_params.insert("VWrap", fmt_osl_expr("periodic"));
+        else if (tiling & V_MIRROR)
+            tex_params.insert("VWrap", fmt_osl_expr("mirror"));
+        else
+            tex_params.insert("VWrap", fmt_osl_expr("black"));
+
+        tex_params.insert("UOffset", fmt_osl_expr(u_offset));
+        tex_params.insert("VOffset", fmt_osl_expr(v_offset));
+
+        tex_params.insert("UTiling", fmt_osl_expr(u_tiling));
+        tex_params.insert("VTiling", fmt_osl_expr(v_tiling));
+    }
+
+    if (!is_linear_texture(static_cast<BitmapTex*>(texmap)))
     {
         auto texture_layer_name = asf::format("{0}_{1}_texture", material_node_name, material_input_name);
         shader_group.add_shader("shader", "as_max_color_texture", texture_layer_name.c_str(),
-            asr::ParamArray()
-                .insert("Filename", fmt_osl_expr(texmap))
-                .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier))));
+            tex_params
+            .insert("Filename", fmt_osl_expr(texmap))
+            .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier))));
 
         auto srgb_to_linear_layer_name = asf::format("{0}_{1}_srgb_to_linear", material_node_name, material_input_name);
         shader_group.add_shader("shader", "as_max_srgb_to_linear_rgb", srgb_to_linear_layer_name.c_str(),
@@ -121,9 +164,9 @@ void connect_color_texture(
     {
         auto texture_layer_name = asf::format("{0}_{1}_texture", material_node_name, material_input_name);
         shader_group.add_shader("shader", "as_max_color_texture", texture_layer_name.c_str(),
-            asr::ParamArray()
-                .insert("Filename", fmt_osl_expr(texmap))
-                .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier))));
+            tex_params
+            .insert("Filename", fmt_osl_expr(texmap))
+            .insert("Multiplier", fmt_osl_expr(to_color3f(multiplier))));
 
         shader_group.add_connection(
             texture_layer_name.c_str(), "ColorOut",
