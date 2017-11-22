@@ -41,7 +41,10 @@
 
 // 3ds Max Headers.
 #include <bitmap.h>
+#include <imtl.h>
+#include <maxapi.h>
 #include <stdmat.h>
+
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -97,8 +100,89 @@ void connect_color_texture(
     Texmap*             texmap,
     const Color         multiplier)
 {
-    if (is_bitmap_texture(texmap) && !is_linear_texture(static_cast<BitmapTex*>(texmap)))
+    if (!is_bitmap_texture(texmap))
+        return;
+
+    asr::ParamArray uv_params;
+
+    UVGen* uv_gen = texmap->GetTheUVGen();
+    if (uv_gen && uv_gen->IsStdUVGen())
     {
+        StdUVGen* std_uv = static_cast<StdUVGen*>(uv_gen);
+        auto time = GetCOREInterface()->GetTime();
+        // Assume that all the textures are in texture mode texmap->MapSlotType() == MAPSLOT_TEXTURE and static_cast<StdUVGen*>(uv_gen)->GetCoordMapping() == UVMAP_EXPLICIT
+
+        float u_tiling = std_uv->GetUScl(time);
+        float v_tiling = std_uv->GetVScl(time);
+        float u_offset = std_uv->GetUOffs(time);
+        float v_offset = std_uv->GetVOffs(time);
+
+        int tiling = std_uv->GetTextureTiling();
+
+        if (tiling & U_WRAP)
+            uv_params.insert("in_wrapU", fmt_osl_expr(1));
+        if (tiling & U_MIRROR)
+            uv_params.insert("in_mirrorU", fmt_osl_expr(1));
+
+        if (tiling & V_WRAP)
+            uv_params.insert("in_wrapV", fmt_osl_expr(1));
+        if (tiling & V_MIRROR)
+            uv_params.insert("in_mirrorV", fmt_osl_expr(1));
+        
+        uv_params.insert("in_offsetU", fmt_osl_expr(u_offset));
+        uv_params.insert("in_offsetV", fmt_osl_expr(v_offset));
+
+        uv_params.insert("in_repeatU", fmt_osl_expr(u_tiling));
+        uv_params.insert("in_repeatV", fmt_osl_expr(v_tiling));
+
+        // Access BMTex paramaters which are only accessible in a weird way
+        enum 
+        {   bmtex_params, 
+            bmtex_time 
+        };
+        enum
+        {
+            bmtex_clipu, 
+            bmtex_clipv, 
+            bmtex_clipw, 
+            bmtex_cliph,
+            bmtex_jitter, 
+            bmtex_usejitter,
+            bmtex_apply, 
+            bmtex_crop_place
+        };
+
+        auto pblock = texmap->GetParamBlock(bmtex_params);
+        if (pblock)
+        {
+            int use_clip = pblock->GetInt(bmtex_apply, time);
+            if (use_clip)
+            {
+                float clip_u = pblock->GetFloat(bmtex_clipu, time);
+                float clip_v = pblock->GetFloat(bmtex_clipv, time);
+
+                float clip_w = pblock->GetFloat(bmtex_clipw, time);
+                float clip_h = pblock->GetFloat(bmtex_cliph, time);
+
+                int crop_place = pblock->GetInt(bmtex_crop_place, time);
+
+                uv_params.insert("in_translateFrameU", fmt_osl_expr(clip_u));
+                uv_params.insert("in_translateFrameV", fmt_osl_expr(clip_v));
+
+                uv_params.insert("in_coverageU", fmt_osl_expr(clip_w));
+                uv_params.insert("in_coverageV", fmt_osl_expr(clip_h));
+                
+                uv_params.insert("in_is_Crop", fmt_osl_expr((float)crop_place));
+            }
+        }
+    }
+
+    if (!is_linear_texture(static_cast<BitmapTex*>(texmap)))
+    {
+        auto uv_transform_layer_name = asf::format("{0}_{1}_uv", material_node_name, material_input_name);
+        shader_group.add_shader("shader", "as_max_map2d", uv_transform_layer_name.c_str(),
+            uv_params);
+
         auto texture_layer_name = asf::format("{0}_{1}_texture", material_node_name, material_input_name);
         shader_group.add_shader("shader", "as_max_color_texture", texture_layer_name.c_str(),
             asr::ParamArray()
@@ -108,6 +192,14 @@ void connect_color_texture(
         auto srgb_to_linear_layer_name = asf::format("{0}_{1}_srgb_to_linear", material_node_name, material_input_name);
         shader_group.add_shader("shader", "as_max_srgb_to_linear_rgb", srgb_to_linear_layer_name.c_str(),
             asr::ParamArray());
+
+        shader_group.add_connection(
+            uv_transform_layer_name.c_str(), "out_outU",
+            texture_layer_name.c_str(), "U");
+
+        shader_group.add_connection(
+            uv_transform_layer_name.c_str(), "out_outV",
+            texture_layer_name.c_str(), "V");
 
         shader_group.add_connection(
             texture_layer_name.c_str(), "ColorOut",
