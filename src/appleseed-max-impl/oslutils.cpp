@@ -121,12 +121,12 @@ void connect_color_texture(
 
         if (tiling & U_WRAP)
             uv_params.insert("in_wrapU", fmt_osl_expr(1));
-        if (tiling & U_MIRROR)
+        else if (tiling & U_MIRROR)
             uv_params.insert("in_mirrorU", fmt_osl_expr(1));
 
         if (tiling & V_WRAP)
             uv_params.insert("in_wrapV", fmt_osl_expr(1));
-        if (tiling & V_MIRROR)
+        else if (tiling & V_MIRROR)
             uv_params.insert("in_mirrorV", fmt_osl_expr(1));
         
         uv_params.insert("in_offsetU", fmt_osl_expr(u_offset));
@@ -169,8 +169,8 @@ void connect_color_texture(
                 uv_params.insert("in_translateFrameU", fmt_osl_expr(clip_u));
                 uv_params.insert("in_translateFrameV", fmt_osl_expr(clip_v));
 
-                uv_params.insert("in_coverageU", fmt_osl_expr(clip_w));
-                uv_params.insert("in_coverageV", fmt_osl_expr(clip_h));
+                uv_params.insert("in_cropW", fmt_osl_expr(clip_w));
+                uv_params.insert("in_cropH", fmt_osl_expr(clip_h));
                 
                 uv_params.insert("in_is_Crop", fmt_osl_expr((float)crop_place));
             }
