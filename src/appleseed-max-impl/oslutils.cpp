@@ -54,6 +54,11 @@ std::string fmt_osl_expr(const std::string& s)
     return asf::format("string {0}", s);
 }
 
+std::string fmt_osl_expr(const int value)
+{
+    return asf::format("int {0}", value);
+}
+
 std::string fmt_osl_expr(const float value)
 {
     return asf::format("float {0}", value);
@@ -166,14 +171,19 @@ void connect_color_texture(
 
                 int crop_place = pblock->GetInt(bmtex_crop_place, time);
 
-                uv_params.insert("in_translateFrameU", fmt_osl_expr(clip_u));
-                uv_params.insert("in_translateFrameV", fmt_osl_expr(clip_v));
+                uv_params.insert("in_cropU", fmt_osl_expr(clip_u));
+                uv_params.insert("in_cropV", fmt_osl_expr(clip_v));
 
                 uv_params.insert("in_cropW", fmt_osl_expr(clip_w));
                 uv_params.insert("in_cropH", fmt_osl_expr(clip_h));
                 
-                uv_params.insert("in_is_Crop", fmt_osl_expr((float)crop_place));
+                if (crop_place)
+                    uv_params.insert("in_crop", fmt_osl_expr("place"));
+                else
+                    uv_params.insert("in_crop", fmt_osl_expr("crop"));
             }
+            else
+                uv_params.insert("in_crop", fmt_osl_expr("off"));
         }
     }
 
