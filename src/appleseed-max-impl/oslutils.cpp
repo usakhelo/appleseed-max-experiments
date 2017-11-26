@@ -121,7 +121,7 @@ void connect_color_texture(
         float v_tiling = std_uv->GetVScl(time);
         float u_offset = std_uv->GetUOffs(time);
         float v_offset = std_uv->GetVOffs(time);
-
+        float w_rotation = std_uv->GetWAng(time);
         int tiling = std_uv->GetTextureTiling();
 
         if (tiling & U_WRAP)
@@ -137,8 +137,10 @@ void connect_color_texture(
         uv_params.insert("in_offsetU", fmt_osl_expr(u_offset));
         uv_params.insert("in_offsetV", fmt_osl_expr(v_offset));
 
-        uv_params.insert("in_repeatU", fmt_osl_expr(u_tiling));
-        uv_params.insert("in_repeatV", fmt_osl_expr(v_tiling));
+        uv_params.insert("in_tilingU", fmt_osl_expr(u_tiling));
+        uv_params.insert("in_tilingV", fmt_osl_expr(v_tiling));
+
+        uv_params.insert("in_rotateW", fmt_osl_expr(w_rotation));
 
         // Access BMTex paramaters which are only accessible in a weird way
         enum 
@@ -178,12 +180,12 @@ void connect_color_texture(
                 uv_params.insert("in_cropH", fmt_osl_expr(clip_h));
                 
                 if (crop_place)
-                    uv_params.insert("in_crop", fmt_osl_expr("place"));
+                    uv_params.insert("in_crop_mode", fmt_osl_expr("place"));
                 else
-                    uv_params.insert("in_crop", fmt_osl_expr("crop"));
+                    uv_params.insert("in_crop_mode", fmt_osl_expr("crop"));
             }
             else
-                uv_params.insert("in_crop", fmt_osl_expr("off"));
+                uv_params.insert("in_crop_mode", fmt_osl_expr("off"));
         }
     }
 
@@ -204,11 +206,11 @@ void connect_color_texture(
             asr::ParamArray());
 
         shader_group.add_connection(
-            uv_transform_layer_name.c_str(), "out_outU",
+            uv_transform_layer_name.c_str(), "out_U",
             texture_layer_name.c_str(), "U");
 
         shader_group.add_connection(
-            uv_transform_layer_name.c_str(), "out_outV",
+            uv_transform_layer_name.c_str(), "out_V",
             texture_layer_name.c_str(), "V");
 
         shader_group.add_connection(
