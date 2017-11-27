@@ -191,8 +191,8 @@ void connect_color_texture(
 
     if (!is_linear_texture(static_cast<BitmapTex*>(texmap)))
     {
-        auto uv_transform_layer_name = asf::format("{0}_{1}_uv", material_node_name, material_input_name);
-        shader_group.add_shader("shader", "as_max_map2d", uv_transform_layer_name.c_str(),
+        auto uv_transform_layer_name = asf::format("{0}_{1}_uv_transform", material_node_name, material_input_name);
+        shader_group.add_shader("shader", "as_max_uv_transform", uv_transform_layer_name.c_str(),
             uv_params);
 
         auto texture_layer_name = asf::format("{0}_{1}_texture", material_node_name, material_input_name);
