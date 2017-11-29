@@ -30,6 +30,8 @@
 #include "logtarget.h"
 
 // appleseed-max headers.
+#include "appleseedrenderer/resource.h"
+#include "main.h"
 #include "utilities.h"
 
 // appleseed.foundation headers.
@@ -53,6 +55,30 @@ namespace asf = foundation;
 namespace
 {
     typedef std::vector<std::string> StringVec;
+
+    HWND g_log_hwnd = 0;
+
+    static INT_PTR CALLBACK LogDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+        //SystemPanel *dlg = DLGetWindowLongPtr<SystemPanel*>(hWnd);
+        switch (msg)
+        {
+        case WM_INITDIALOG:
+            //dlg = reinterpret_cast<SystemPanel*>(lParam);
+            CenterWindow(hWnd, GetParent(hWnd));
+            ShowWindow(hWnd, SW_SHOW);
+            break;
+
+        case WM_CLOSE:
+            DestroyWindow(hWnd);
+            g_log_hwnd = 0;
+            break;
+
+        default:
+            return FALSE;
+        }
+        return TRUE;
+    }
 
     void emit_message(const DWORD type, const StringVec& lines)
     {
@@ -90,8 +116,30 @@ namespace
     {
         boost::mutex::scoped_lock lock(g_message_queue_mutex);
 
-        for (const auto& message : g_message_queue)
-            emit_message(message.m_type, message.m_lines);
+        if (g_log_hwnd)
+        {
+            int text_len = GetWindowTextLength(GetDlgItem(g_log_hwnd, IDC_EDIT_LOG)) + 1;
+            TSTR theText;
+            theText.Resize(text_len);
+            GetWindowText(
+                GetDlgItem(g_log_hwnd, IDC_EDIT_LOG),
+                theText.dataForWrite(), text_len);
+
+            for (const auto& message : g_message_queue)
+            {
+                for (const auto& line : message.m_lines)
+                {
+                    theText.Append(TSTR::FromCStr(line.c_str()));
+                }
+            }
+
+            SetDlgItemText(g_log_hwnd, IDC_EDIT_LOG, theText.data());
+        }
+        else
+        {
+            for (const auto& message : g_message_queue)
+                emit_message(message.m_type, message.m_lines);
+        }
 
         g_message_queue.clear();
     }
@@ -133,12 +181,22 @@ void LogTarget::write(
         break;
     }
 
+    // Open base on type and render settings
+    if (!g_log_hwnd)
+    {
+        g_log_hwnd = CreateDialog(
+            g_module,
+            MAKEINTRESOURCE(IDD_DIALOG_LOG),
+            GetCOREInterface()->GetMAXHWnd(),
+            LogDlgProc);
+    }
+
     std::vector<std::string> lines;
     asf::split(message, "\n", lines);
 
-    if (is_main_thread())
-        emit_message(type, lines);
-    else
+    //if (is_main_thread())
+    //    emit_message(type, lines);
+    //else
     {
         push_message(type, lines);
         PostMessage(
