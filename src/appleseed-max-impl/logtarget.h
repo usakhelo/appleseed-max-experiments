@@ -46,4 +46,9 @@ class LogTarget
         const size_t                            line,
         const char*                             header,
         const char*                             message) override;
+
+    void open_log_window();
+
+    struct LogWindow;
+    LogWindow* m_log_window;
 };
