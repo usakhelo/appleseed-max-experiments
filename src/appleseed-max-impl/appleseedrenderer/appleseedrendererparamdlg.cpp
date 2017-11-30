@@ -722,36 +722,6 @@ namespace
             CheckDlgButton(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS, m_settings.m_use_max_procedural_maps ? BST_CHECKED : BST_UNCHECKED);
         }
 
-        static INT_PTR CALLBACK LogDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-        {
-            SystemPanel *dlg = DLGetWindowLongPtr<SystemPanel*>(hWnd);
-            switch (msg)
-            {
-              case WM_INITDIALOG:
-                dlg = reinterpret_cast<SystemPanel*>(lParam);
-                CenterWindow(hWnd, GetParent(hWnd));
-                ShowWindow(hWnd, SW_SHOW);
-                break;
-
-              case WM_CLOSE:
-                DestroyWindow(hWnd);
-                break;
-
-              case WM_DESTROY:
-                break;
-
-              case WM_PAINT:
-                return FALSE;
-
-              case WM_COMMAND:
-                break;
-
-              default:
-                return FALSE;
-            }
-            return TRUE;
-        }
-
         virtual INT_PTR CALLBACK dialog_proc(
             HWND                hwnd,
             UINT                umsg,
@@ -772,12 +742,7 @@ namespace
                     return TRUE;
 
                   case IDC_BUTTON_LOG:
-                      CreateDialogParam(
-                          g_module,
-                          MAKEINTRESOURCE(IDD_DIALOG_LOG),
-                          GetCOREInterface()->GetMAXHWnd(),
-                          LogDlgProc,
-                          (LPARAM)this);
+                      //open dialog here
                       return TRUE;
 
                   default:

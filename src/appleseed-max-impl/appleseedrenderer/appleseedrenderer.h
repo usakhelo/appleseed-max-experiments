@@ -50,6 +50,7 @@
 
 // Forward declarations.
 class AppleseedInteractiveRender;
+class WindowLogTarget;
 
 class AppleseedRenderer
   : public Renderer
@@ -150,6 +151,7 @@ class AppleseedRenderer
     std::vector<DefaultLight>   m_default_lights;
     TimeValue                   m_time;
     MaxSceneEntities            m_entities;
+    WindowLogTarget*            m_logtarget;
 
     void clear();
 };
