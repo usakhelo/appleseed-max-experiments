@@ -29,16 +29,11 @@ namespace asf = foundation;
 namespace
 {
     typedef std::vector<std::string> StringVec;
+    typedef std::pair<asf::LogMessage::Category, StringVec> Message_Pair;
 
-    struct Message
-    {
-        DWORD               m_type;
-        StringVec           m_lines;
-    };
-
-    boost::mutex            g_message_queue_mutex;
-    std::vector<Message>    g_message_queue;
-    HWND                    g_log_window = 0;
+    boost::mutex                g_message_queue_mutex;
+    std::vector<Message_Pair>   g_message_queue;
+    HWND                        g_log_window = 0;
 
     void append_text(HWND edit_box, const wchar_t* text)
     {
@@ -57,22 +52,41 @@ namespace
         SendMessage(edit_box, EM_SETSEL, start_pos, end_pos);
     }
 
-    static INT_PTR CALLBACK dialog_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
         switch (msg)
         {
           case WM_INITDIALOG:
-            CenterWindow(hWnd, GetParent(hWnd));
-            ShowWindow(hWnd, SW_SHOW);
-            break;
+            {
+                WindowLogTarget* log_window = reinterpret_cast<WindowLogTarget*>(lparam);
+                DLSetWindowLongPtr(hwnd, log_window);
+                //log_window->init(hwnd);
 
+                HFONT hFont = CreateFont(20, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
+                    OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+                    DEFAULT_PITCH | FF_DONTCARE, TEXT("Consolas"));
+
+                HFONT hFont1 = (HFONT)SendMessage(hwnd, WM_GETFONT, 0, 0);
+                if (hFont)
+                    SendDlgItemMessage(g_log_window, IDC_EDIT_LOG, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+            }
+            break;
           case WM_CLOSE:
+          case WM_DESTROY:
             {
                 //LogWindow* dlg = DLGetWindowLongPtr<LogWindow*>(hWnd);
                 g_log_window = 0;
-                DestroyWindow(hWnd);
+                DestroyWindow(hwnd);
             }
             break;
+          
+          case WM_SIZE:
+              MoveWindow(GetDlgItem(g_log_window, IDC_EDIT_LOG),
+                  0,
+                  0,
+                  LOWORD(lparam),
+                  HIWORD(lparam),
+                  true);
 
           default:
             return FALSE;
@@ -80,7 +94,7 @@ namespace
         return TRUE;
     }
 
-    void emit_message(const DWORD type, const StringVec& lines)
+    void emit_message(const asf::LogMessage::Category type, const StringVec& lines)
     {
         for (const auto& line : lines)
         {
@@ -88,24 +102,13 @@ namespace
             {
                 append_text(GetDlgItem(g_log_window, IDC_EDIT_LOG), utf8_to_wide(line + "\n").c_str());
             }
-
-            GetCOREInterface()->Log()->LogEntry(
-                type,
-                FALSE,
-                L"appleseed",
-                L"[appleseed] %s",
-                utf8_to_wide(line).c_str());
         }
     }
 
-    void push_message(const DWORD type, const StringVec& lines)
+    void push_message(const asf::LogMessage::Category type, const StringVec& lines)
     {
         boost::mutex::scoped_lock lock(g_message_queue_mutex);
-
-        Message message;
-        message.m_type = type;
-        message.m_lines = lines;
-        g_message_queue.push_back(message);
+        g_message_queue.push_back(Message_Pair(type, lines));
     }
 
     void emit_pending_messages()
@@ -113,7 +116,7 @@ namespace
         boost::mutex::scoped_lock lock(g_message_queue_mutex);
 
         for (const auto& message : g_message_queue)
-            emit_message(message.m_type, message.m_lines);
+            emit_message(message.first, message.second);
 
         g_message_queue.clear();
     }
@@ -142,19 +145,6 @@ void WindowLogTarget::write(
     const char*                     header,
     const char*                     message)
 {
-    DWORD type;
-    switch (category)
-    {
-    case asf::LogMessage::Debug: type = SYSLOG_DEBUG; break;
-    case asf::LogMessage::Info: type = SYSLOG_INFO; break;
-    case asf::LogMessage::Warning: type = SYSLOG_WARN; break;
-    case asf::LogMessage::Error:
-    case asf::LogMessage::Fatal:
-    default:
-        type = SYSLOG_ERROR;
-        break;
-    }
-
     // Open base on type and render settings
     if (true)
         open_log_window();
@@ -166,7 +156,7 @@ void WindowLogTarget::write(
     //    emit_message(type, lines);
     //else
     //{
-        push_message(type, lines);
+        push_message(category, lines);
         PostMessage(
             GetCOREInterface()->GetMAXHWnd(),
             WM_TRIGGER_CALLBACK,
