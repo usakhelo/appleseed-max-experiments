@@ -33,6 +33,7 @@
 #include "appleseedglassmtl/appleseedglassmtl.h"
 #include "appleseedlightmtl/appleseedlightmtl.h"
 #include "appleseedmetalmtl/appleseedmetalmtl.h"
+#include "appleseedplasticmtl/appleseedplasticmtl.h"
 #include "appleseedobjpropsmod/appleseedobjpropsmod.h"
 #include "appleseedrenderer/appleseedrenderer.h"
 #include "appleseedsssmtl/appleseedsssmtl.h"
@@ -81,7 +82,7 @@ extern "C"
     __declspec(dllexport)
     int LibNumberClasses()
     {
-        return 9;
+        return 10;
     }
 
     __declspec(dllexport)
@@ -98,6 +99,7 @@ extern "C"
           case 6: return &g_appleseed_envmap_classdesc;
           case 7: return &g_appleseed_blendmtl_classdesc;
           case 8: return &g_appleseed_metalmtl_classdesc;
+          case 9: return &g_appleseed_plasticmtl_classdesc;
 
           // Make sure to update LibNumberClasses() if you add classes here.
 
