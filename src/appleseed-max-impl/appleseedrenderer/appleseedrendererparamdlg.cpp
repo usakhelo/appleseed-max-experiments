@@ -712,6 +712,12 @@ namespace
             m_spinner_renderingthreads->SetResetValue(RendererSettings::defaults().m_rendering_threads);
             m_spinner_renderingthreads->SetValue(m_settings.m_rendering_threads, FALSE);
 
+            const wchar_t* log_combo_items[] = { L"Always", L"Never", L"On Warning", L"On Error" };
+            int show_log_setting = 0;       // Should be saved in settings
+            for (int i = 0; i < 4; i++)
+                SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_ADDSTRING, 0, (LPARAM)(LPCTSTR)log_combo_items[i]);
+            SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_SETCURSEL, show_log_setting, 0);
+
             CheckDlgButton(hwnd, IDC_CHECK_LOW_PRIORITY_MODE, m_settings.m_low_priority_mode ? BST_CHECKED : BST_UNCHECKED);
             CheckDlgButton(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS, m_settings.m_use_max_procedural_maps ? BST_CHECKED : BST_UNCHECKED);
         }
@@ -734,6 +740,10 @@ namespace
                   case IDC_CHECK_USE_MAX_PROCEDURAL_MAPS:
                     m_settings.m_use_max_procedural_maps = IsDlgButtonChecked(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS) == BST_CHECKED;
                     return TRUE;
+
+                  case IDC_BUTTON_LOG:
+                      //open dialog here
+                      return TRUE;
 
                   default:
                     return FALSE;

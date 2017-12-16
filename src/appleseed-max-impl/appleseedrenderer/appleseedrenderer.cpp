@@ -36,6 +36,7 @@
 #include "appleseedrenderer/projectbuilder.h"
 #include "appleseedrenderer/renderercontroller.h"
 #include "appleseedrenderer/tilecallback.h"
+#include "logwindow.h"
 #include "utilities.h"
 #include "version.h"
 
@@ -438,6 +439,10 @@ int AppleseedRenderer::Render(
         renderer_settings.m_background_emits_light = false;
     }
 
+    // Create logtarget dialog
+    m_logtarget = new WindowLogTarget();
+    asr::global_logger().add_target(m_logtarget);
+
     // Collect the entities we're interested in.
     if (progress_cb)
         progress_cb->SetTitle(L"Collecting Entities...");
@@ -524,6 +529,12 @@ void AppleseedRenderer::Close(
 {
     // Call RenderEnd() on all object instances.
     render_end(m_entities.m_objects, m_time);
+
+    // Create logtarget dialog
+    asr::global_logger().remove_target(m_logtarget);
+    if (m_logtarget)
+        delete m_logtarget;
+    m_logtarget = nullptr;
 
     clear();
 }

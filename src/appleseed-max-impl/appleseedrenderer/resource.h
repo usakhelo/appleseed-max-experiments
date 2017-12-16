@@ -47,6 +47,12 @@
 #define IDC_CHECK_LOW_PRIORITY_MODE                 503
 #define IDC_CHECK_USE_MAX_PROCEDURAL_MAPS           504
 
+#define IDD_DIALOG_LOG                              600
+#define IDC_COMBO_LOG                               601
+#define IDC_STATIC_LOG                              602
+#define IDC_BUTTON_LOG                              603
+#define IDC_EDIT_LOG                                604
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
