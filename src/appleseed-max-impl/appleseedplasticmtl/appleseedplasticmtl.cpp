@@ -127,11 +127,11 @@ namespace
 
     const MSTR g_texmap_slot_names[TexmapCount] =
     {
-        L"Normal Reflectance",
-        L"Edge Tint",
-        L"Reflectance",
+        L"Specular",
+        L"Specular Weight",
         L"Roughness",
-        L"Anisotropy",
+        L"Diffuse",
+        L"Diffuse Weight",
         L"Alpha",
         L"Bump Map"
     };
@@ -293,6 +293,25 @@ Class_ID AppleseedPlasticMtl::get_class_id()
 
 AppleseedPlasticMtl::AppleseedPlasticMtl()
   : m_pblock(nullptr)
+  , m_specular(1.0f, 1.0f, 1.0f)
+  , m_specular_texmap(nullptr)
+  , m_specular_weight(100.0f)
+  , m_specular_weight_texmap(nullptr)
+  , m_diffuse(0.5f, 0.5f, 0.5f)
+  , m_diffuse_texmap(nullptr)
+  , m_diffuse_weight(100.0f)
+  , m_diffuse_weight_texmap(nullptr)
+  , m_roughness(10.0f)
+  , m_roughness_texmap(nullptr)
+  , m_highlight_falloff(40.0f)
+  , m_ior(1.5f)
+  , m_scattering(100.0f)
+  , m_alpha(100.0f)
+  , m_alpha_texmap(nullptr)
+  , m_bump_method(0)
+  , m_bump_texmap(nullptr)
+  , m_bump_amount(1.0f)
+  , m_bump_up_vector(1)
 {
     m_params_validity.SetEmpty();
 

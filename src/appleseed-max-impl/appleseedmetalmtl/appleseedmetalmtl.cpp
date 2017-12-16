@@ -147,7 +147,7 @@ namespace
     ParamBlockDesc2 g_block_desc(
         // --- Required arguments ---
         ParamBlockIdMetalMtl,                       // parameter block's ID
-        L"appleseedDisneyMtlParams",                // internal parameter block's name
+        L"appleseedMetalMtlParams",                // internal parameter block's name
         0,                                          // ID of the localized name string
         &g_appleseed_metalmtl_classdesc,            // class descriptor
         P_AUTO_CONSTRUCT + P_MULTIMAP + P_AUTO_UI,  // block flags
@@ -158,7 +158,7 @@ namespace
         // --- P_MULTIMAP arguments ---
         2,                                          // number of rollups
 
-        // --- P_AUTO_UI arguments for Disney rollup ---
+        // --- P_AUTO_UI arguments for Metal rollup ---
         ParamMapIdMetal,
         IDD_FORMVIEW_PARAMS,                        // ID of the dialog template
         IDS_FORMVIEW_PARAMS_TITLE,                  // ID of the dialog's title string
@@ -174,7 +174,7 @@ namespace
         0,                                          // rollup creation flag
         nullptr,                                    // user dialog procedure
 
-        // --- Parameters specifications for Disney rollup ---
+        // --- Parameters specifications for Metal rollup ---
 
         ParamIdNormalReflectance, L"normal_reflectance", TYPE_RGBA, P_ANIMATABLE, IDS_NORMAL_REFLECTANCE,
             p_default, Color(0.92f, 0.92f, 0.92f),
@@ -272,6 +272,22 @@ Class_ID AppleseedMetalMtl::get_class_id()
 
 AppleseedMetalMtl::AppleseedMetalMtl()
   : m_pblock(nullptr)
+  , m_normal_reflectance_color(0.92f, 0.92f, 0.92f)
+  , m_normal_reflectance_color_texmap(nullptr)
+  , m_edge_tint_color(0.98f, 0.98f, 0.98f)
+  , m_edge_tint_color_texmap(nullptr)
+  , m_reflectance(80.0f)
+  , m_reflectance_texmap(nullptr)
+  , m_roughness(10.0f)
+  , m_roughness_texmap(nullptr)
+  , m_anisotropy(0.0f)
+  , m_anisotropy_texmap(nullptr)
+  , m_alpha(100.0f)
+  , m_alpha_texmap(nullptr)
+  , m_bump_method(0)
+  , m_bump_texmap(nullptr)
+  , m_bump_amount(1.0f)
+  , m_bump_up_vector(1)
 {
     m_params_validity.SetEmpty();
 
