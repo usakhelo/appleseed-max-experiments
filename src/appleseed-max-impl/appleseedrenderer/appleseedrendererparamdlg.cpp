@@ -30,9 +30,11 @@
 #include "appleseedrendererparamdlg.h"
 
 // appleseed-max headers.
+#include "appleseedrenderer/appleseedrenderer.h"
 #include "appleseedrenderer/renderersettings.h"
 #include "appleseedrenderer/resource.h"
 #include "appleseedrenderer/updatechecker.h"
+#include "logwindow.h"
 #include "main.h"
 #include "utilities.h"
 #include "version.h"
@@ -680,12 +682,15 @@ namespace
         HWND                    m_rollup;
         ICustEdit*              m_text_renderingthreads;
         ISpinnerControl*        m_spinner_renderingthreads;
+        AppleseedRenderer*      m_renderer;
 
         SystemPanel(
             IRendParams*        rend_params,
-            RendererSettings&   settings)
+            RendererSettings&   settings,
+            AppleseedRenderer*    renderer)
           : m_rend_params(rend_params)
           , m_settings(settings)
+          , m_renderer(renderer)
         {
             m_rollup =
                 rend_params->AddRollupPage(
@@ -713,10 +718,9 @@ namespace
             m_spinner_renderingthreads->SetValue(m_settings.m_rendering_threads, FALSE);
 
             const wchar_t* log_combo_items[] = { L"Always", L"Never", L"On Warning", L"On Error" };
-            int show_log_setting = 0;       // Should be saved in settings
             for (int i = 0; i < 4; i++)
                 SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_ADDSTRING, 0, (LPARAM)(LPCTSTR)log_combo_items[i]);
-            SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_SETCURSEL, show_log_setting, 0);
+            SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_SETCURSEL, static_cast<int>(m_settings.m_log_open_mode), 0);
 
             CheckDlgButton(hwnd, IDC_CHECK_LOW_PRIORITY_MODE, m_settings.m_low_priority_mode ? BST_CHECKED : BST_UNCHECKED);
             CheckDlgButton(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS, m_settings.m_use_max_procedural_maps ? BST_CHECKED : BST_UNCHECKED);
@@ -742,8 +746,10 @@ namespace
                     return TRUE;
 
                   case IDC_BUTTON_LOG:
-                      //open dialog here
-                      return TRUE;
+                    if (m_renderer->m_log_target == nullptr)
+                        m_renderer->m_log_target = new WindowLogTarget(&m_renderer->m_session_log_messages, m_settings.m_log_open_mode); //should consider combobox setting
+                    m_renderer->m_log_target->fill_log_window();
+                    return TRUE;
 
                   default:
                     return FALSE;
@@ -781,7 +787,8 @@ struct AppleseedRendererParamDlg::Impl
     Impl(
         IRendParams*        rend_params,
         BOOL                in_progress,
-        RendererSettings&   settings)
+        RendererSettings&   settings,
+        AppleseedRenderer*  renderer)
       : m_temp_settings(settings)
       , m_settings(settings)
     {
@@ -791,7 +798,7 @@ struct AppleseedRendererParamDlg::Impl
             m_image_sampling_panel.reset(new ImageSamplingPanel(rend_params, m_temp_settings));
             m_lighting_panel.reset(new LightingPanel(rend_params, m_temp_settings));
             m_output_panel.reset(new OutputPanel(rend_params, m_temp_settings));
-            m_system_panel.reset(new SystemPanel(rend_params, m_temp_settings));
+            m_system_panel.reset(new SystemPanel(rend_params, m_temp_settings, renderer));
         }
     }
 };
@@ -799,8 +806,9 @@ struct AppleseedRendererParamDlg::Impl
 AppleseedRendererParamDlg::AppleseedRendererParamDlg(
     IRendParams*            rend_params,
     BOOL                    in_progress,
-    RendererSettings&       settings)
-  : impl(new Impl(rend_params, in_progress, settings))
+    RendererSettings&       settings,
+    AppleseedRenderer*      renderer)
+  : impl(new Impl(rend_params, in_progress, settings, renderer))
 {
 }
 

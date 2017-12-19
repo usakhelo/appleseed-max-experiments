@@ -36,7 +36,6 @@
 #include "appleseedrenderer/projectbuilder.h"
 #include "appleseedrenderer/renderercontroller.h"
 #include "appleseedrenderer/tilecallback.h"
-#include "logwindow.h"
 #include "utilities.h"
 #include "version.h"
 
@@ -440,8 +439,9 @@ int AppleseedRenderer::Render(
     }
 
     // Create logtarget dialog
-    m_logtarget = new WindowLogTarget();
-    asr::global_logger().add_target(m_logtarget);
+    m_session_log_messages.clear();
+    m_log_target = new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode);
+    asr::global_logger().add_target(m_log_target);
 
     // Collect the entities we're interested in.
     if (progress_cb)
@@ -531,10 +531,10 @@ void AppleseedRenderer::Close(
     render_end(m_entities.m_objects, m_time);
 
     // Create logtarget dialog
-    asr::global_logger().remove_target(m_logtarget);
-    if (m_logtarget)
-        delete m_logtarget;
-    m_logtarget = nullptr;
+    asr::global_logger().remove_target(m_log_target);
+    if (m_log_target)
+        delete m_log_target;
+    m_log_target = nullptr;
 
     clear();
 }
@@ -547,7 +547,8 @@ RendParamDlg* AppleseedRenderer::CreateParamDialog(
         new AppleseedRendererParamDlg(
             rend_params,
             in_progress,
-            m_settings);
+            m_settings,
+            this);
 }
 
 void AppleseedRenderer::ResetParams()

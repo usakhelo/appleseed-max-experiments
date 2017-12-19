@@ -20,17 +20,10 @@
 #include <log.h>
 #include <max.h>
 
-// Standard headers.
-#include <string>
-#include <vector>
-
 namespace asf = foundation;
 
 namespace
 {
-    typedef std::vector<std::string> StringVec;
-    typedef std::pair<asf::LogMessage::Category, StringVec> Message_Pair;
-
     boost::mutex                g_message_queue_mutex;
     std::vector<Message_Pair>   g_message_queue;
     HWND                        g_log_window = 0;
@@ -82,7 +75,8 @@ namespace
             break;
           
           case WM_SIZE:
-              MoveWindow(GetDlgItem(g_log_window, IDC_EDIT_LOG),
+              MoveWindow(
+                  GetDlgItem(g_log_window, IDC_EDIT_LOG),
                   0,
                   0,
                   LOWORD(lparam),
@@ -123,15 +117,14 @@ namespace
     }
 
     const UINT WM_TRIGGER_CALLBACK = WM_USER + 4764;
+}
 
-    bool is_main_thread()
-    {
-        // There does not appear to be a GetCOREInterface15() function in the 3ds Max 2015 SDK.
-        Interface15* interface15 =
-            reinterpret_cast<Interface15*>(GetCOREInterface14()->GetInterface(Interface15::kInterface15InterfaceID));
-
-        return interface15->GetMainThreadID() == GetCurrentThreadId();
-    }
+WindowLogTarget::WindowLogTarget(
+    std::vector<Message_Pair>*  session_messages,
+    LogOpenMode                 open_mode)
+    : m_message_store(session_messages)
+    , m_open_mode(open_mode)
+{
 }
 
 void WindowLogTarget::release()
@@ -147,23 +140,38 @@ void WindowLogTarget::write(
     const char*                     message)
 {
     // Open base on type and render settings
-    if (true)
+    if (m_open_mode == LogOpenMode::Never)
+        return;
+
+    switch (m_open_mode)
+    {
+      case LogOpenMode::Errors:
+        if (category != asf::LogMessage::Category::Error ||
+            category != asf::LogMessage::Category::Fatal)
+            return;
+        break;
+      case LogOpenMode::Warnings:
+        if (category != asf::LogMessage::Category::Error ||
+            category != asf::LogMessage::Category::Fatal ||
+            category != asf::LogMessage::Category::Warning)
+            return;
+        break;
+    }
+
+    if (!g_log_window)
         open_log_window();
 
     std::vector<std::string> lines;
     asf::split(message, "\n", lines);
 
-    //if (is_main_thread())
-    //    emit_message(type, lines);
-    //else
-    //{
-        push_message(category, lines);
-        PostMessage(
-            GetCOREInterface()->GetMAXHWnd(),
-            WM_TRIGGER_CALLBACK,
-            reinterpret_cast<WPARAM>(emit_pending_messages),
-            0);
-    //}
+    m_message_store->push_back(Message_Pair(category, lines));
+
+    push_message(category, lines);
+    PostMessage(
+        GetCOREInterface()->GetMAXHWnd(),
+        WM_TRIGGER_CALLBACK,
+        reinterpret_cast<WPARAM>(emit_pending_messages),
+        0);
 }
 
 void WindowLogTarget::open_log_window()
@@ -178,5 +186,17 @@ void WindowLogTarget::open_log_window()
             (LPARAM)this);
 
         GetCOREInterface14()->RegisterModelessRenderWindow(g_log_window);
+    }
+}
+
+void WindowLogTarget::fill_log_window()
+{
+    if (!g_log_window)
+        open_log_window();
+
+    if (m_message_store != nullptr)
+    {
+        for (const auto& message : *m_message_store)
+            emit_message(message.first, message.second);
     }
 }

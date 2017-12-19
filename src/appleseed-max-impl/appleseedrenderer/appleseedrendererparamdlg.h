@@ -39,6 +39,8 @@
 
 // Forward declarations.
 class RendererSettings;
+class WindowLogTarget;
+class AppleseedRenderer;
 
 class AppleseedRendererParamDlg
   : public RendParamDlg
@@ -47,7 +49,8 @@ class AppleseedRendererParamDlg
     AppleseedRendererParamDlg(
         IRendParams*        rend_params,
         BOOL                in_progress,
-        RendererSettings&   settings);
+        RendererSettings&   settings,
+        AppleseedRenderer*  renderer);
 
     ~AppleseedRendererParamDlg();
 

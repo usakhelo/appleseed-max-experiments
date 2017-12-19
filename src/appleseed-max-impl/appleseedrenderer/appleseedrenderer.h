@@ -31,6 +31,7 @@
 // appleseed-max headers.
 #include "appleseedrenderer/maxsceneentities.h"
 #include "appleseedrenderer/renderersettings.h"
+#include "logwindow.h"
 
 // appleseed.foundation headers.
 #include "foundation/platform/windows.h"    // include before 3ds Max headers
@@ -141,6 +142,9 @@ class AppleseedRenderer
     virtual int AcceptTab(
         ITabDialogPluginTab*    tab) override;
 
+    WindowLogTarget*            m_log_target;
+    std::vector<Message_Pair>   m_session_log_messages;
+
   private:
     AppleseedInteractiveRender* m_interactive_renderer;
     RendererSettings            m_settings;
@@ -151,7 +155,6 @@ class AppleseedRenderer
     std::vector<DefaultLight>   m_default_lights;
     TimeValue                   m_time;
     MaxSceneEntities            m_entities;
-    WindowLogTarget*            m_logtarget;
 
     void clear();
 };

@@ -6,11 +6,28 @@
 
 // Standard headers.
 #include <cstddef>
+#include <string>
+#include <vector>
+
+typedef std::vector<std::string> StringVec;
+typedef std::pair<foundation::LogMessage::Category, StringVec> Message_Pair;
+
+enum class LogOpenMode
+{
+    Always,
+    Never,
+    Warnings,
+    Errors
+};
 
 class WindowLogTarget
     : public foundation::ILogTarget
 {
 public:
+    WindowLogTarget(
+        std::vector<Message_Pair>*  session_messages,
+        LogOpenMode                 open_mode);
+
     virtual void release() override;
 
     virtual void write(
@@ -21,4 +38,9 @@ public:
         const char*                             message) override;
 
     void open_log_window();
+    void fill_log_window();
+
+private:
+    std::vector<Message_Pair>*      m_message_store;
+    LogOpenMode                     m_open_mode;
 };
