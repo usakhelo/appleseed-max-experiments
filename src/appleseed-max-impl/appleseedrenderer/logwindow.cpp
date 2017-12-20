@@ -31,8 +31,8 @@ namespace
     void append_text(HWND edit_box, const wchar_t* text)
     {
         // get the current selection
-        DWORD start_pos, end_pos;
-        SendMessage(edit_box, EM_GETSEL, reinterpret_cast<WPARAM>(&start_pos), reinterpret_cast<LPARAM>(&end_pos));
+        //DWORD start_pos, end_pos;
+        //SendMessage(edit_box, EM_GETSEL, reinterpret_cast<WPARAM>(&start_pos), reinterpret_cast<LPARAM>(&end_pos));
 
         // move the caret to the end of the text
         int outLength = GetWindowTextLength(edit_box);
@@ -41,8 +41,14 @@ namespace
         // insert the text at the new caret position
         SendMessage(edit_box, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(text));
 
-        // restore the previous selection
-        SendMessage(edit_box, EM_SETSEL, start_pos, end_pos);
+        //// restore the previous selection
+        //SendMessage(edit_box, EM_SETSEL, start_pos, end_pos);
+
+        DWORD start_pos, end_pos;
+        SendMessage(edit_box, EM_GETSEL, reinterpret_cast<WPARAM>(&start_pos), reinterpret_cast<LPARAM>(&end_pos));
+        LRESULT line_index = SendMessage(edit_box, EM_LINEFROMCHAR, end_pos, NULL);
+        
+        SendMessage(edit_box, EM_LINESCROLL, -10, 0 /*(LPARAM)line_index*/);
     }
 
     static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -53,21 +59,12 @@ namespace
             {
                 WindowLogTarget* log_window = reinterpret_cast<WindowLogTarget*>(lparam);
                 DLSetWindowLongPtr(hwnd, log_window);
-                //log_window->init(hwnd);
-
-                HFONT hFont = CreateFont(20, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET,
-                    OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                    DEFAULT_PITCH | FF_DONTCARE, TEXT("Consolas"));
-
-                HFONT hFont1 = (HFONT)SendMessage(hwnd, WM_GETFONT, 0, 0);
-                if (hFont)
-                    SendDlgItemMessage(g_log_window, IDC_EDIT_LOG, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
             }
             break;
           case WM_CLOSE:
           case WM_DESTROY:
+            if (g_log_window != 0)
             {
-                //LogWindow* dlg = DLGetWindowLongPtr<LogWindow*>(hWnd);
                 GetCOREInterface14()->UnRegisterModelessRenderWindow(g_log_window);
                 g_log_window = 0;
                 DestroyWindow(hwnd);
@@ -75,13 +72,22 @@ namespace
             break;
           
           case WM_SIZE:
+          {
+              HWND edit_box = GetDlgItem(hwnd, IDC_EDIT_LOG);
               MoveWindow(
-                  GetDlgItem(g_log_window, IDC_EDIT_LOG),
+                  edit_box,
                   0,
                   0,
                   LOWORD(lparam),
                   HIWORD(lparam),
                   true);
+
+              int outLength = GetWindowTextLength(edit_box);
+              LRESULT line_index = SendMessage(edit_box, EM_LINEFROMCHAR, outLength, NULL);
+              SendMessage(edit_box, EM_LINESCROLL, 0, 1);
+              return TRUE;
+          }
+              break;
 
           default:
             return FALSE;
@@ -89,7 +95,7 @@ namespace
         return TRUE;
     }
 
-    void emit_message(const asf::LogMessage::Category type, const StringVec& lines)
+    void print_message(const asf::LogMessage::Category type, const StringVec& lines)
     {
         for (const auto& line : lines)
         {
@@ -100,10 +106,10 @@ namespace
         }
     }
 
-    void push_message(const asf::LogMessage::Category type, const StringVec& lines)
+    void push_message(Message_Pair message)
     {
         boost::mutex::scoped_lock lock(g_message_queue_mutex);
-        g_message_queue.push_back(Message_Pair(type, lines));
+        g_message_queue.push_back(message);
     }
 
     void emit_pending_messages()
@@ -111,18 +117,19 @@ namespace
         boost::mutex::scoped_lock lock(g_message_queue_mutex);
 
         for (const auto& message : g_message_queue)
-            emit_message(message.first, message.second);
+            print_message(message.first, message.second);
 
         g_message_queue.clear();
     }
+
 
     const UINT WM_TRIGGER_CALLBACK = WM_USER + 4764;
 }
 
 WindowLogTarget::WindowLogTarget(
-    std::vector<Message_Pair>*  session_messages,
+    std::vector<Message_Pair>*  messages,
     LogOpenMode                 open_mode)
-    : m_message_store(session_messages)
+    : m_saved_messages(messages)
     , m_open_mode(open_mode)
 {
 }
@@ -139,39 +146,43 @@ void WindowLogTarget::write(
     const char*                     header,
     const char*                     message)
 {
-    // Open base on type and render settings
-    if (m_open_mode == LogOpenMode::Never)
-        return;
-
-    switch (m_open_mode)
-    {
-      case LogOpenMode::Errors:
-        if (category != asf::LogMessage::Category::Error ||
-            category != asf::LogMessage::Category::Fatal)
-            return;
-        break;
-      case LogOpenMode::Warnings:
-        if (category != asf::LogMessage::Category::Error ||
-            category != asf::LogMessage::Category::Fatal ||
-            category != asf::LogMessage::Category::Warning)
-            return;
-        break;
-    }
-
-    if (!g_log_window)
-        open_log_window();
-
     std::vector<std::string> lines;
     asf::split(message, "\n", lines);
 
-    m_message_store->push_back(Message_Pair(category, lines));
+    if (m_saved_messages != nullptr)
+        m_saved_messages->push_back(Message_Pair(category, lines));
 
-    push_message(category, lines);
-    PostMessage(
-        GetCOREInterface()->GetMAXHWnd(),
-        WM_TRIGGER_CALLBACK,
-        reinterpret_cast<WPARAM>(emit_pending_messages),
-        0);
+    push_message(Message_Pair(category, lines));
+
+    switch (category)
+    {
+      case asf::LogMessage::Category::Error:
+      case asf::LogMessage::Category::Fatal:
+      case asf::LogMessage::Category::Warning:
+        if (m_open_mode != LogOpenMode::Never)
+            open_log_window();
+        break;
+      case asf::LogMessage::Category::Info:
+          if (m_open_mode == LogOpenMode::Always)
+            open_log_window();
+        break;
+    }
+}
+
+void WindowLogTarget::show_saved_messages()
+{
+    if (m_saved_messages != nullptr)
+    {
+        for (const auto& message : *m_saved_messages)
+            g_message_queue.push_back(message);
+
+        if (g_log_window)
+        {
+            SetDlgItemText(g_log_window, IDC_EDIT_LOG, L"");
+        }
+
+        open_log_window();
+    }
 }
 
 void WindowLogTarget::open_log_window()
@@ -187,16 +198,10 @@ void WindowLogTarget::open_log_window()
 
         GetCOREInterface14()->RegisterModelessRenderWindow(g_log_window);
     }
-}
-
-void WindowLogTarget::fill_log_window()
-{
-    if (!g_log_window)
-        open_log_window();
-
-    if (m_message_store != nullptr)
-    {
-        for (const auto& message : *m_message_store)
-            emit_message(message.first, message.second);
-    }
+    
+    PostMessage(
+        GetCOREInterface()->GetMAXHWnd(),
+        WM_TRIGGER_CALLBACK,
+        reinterpret_cast<WPARAM>(emit_pending_messages),
+        0);
 }

@@ -438,10 +438,8 @@ int AppleseedRenderer::Render(
         renderer_settings.m_background_emits_light = false;
     }
 
-    // Create logtarget dialog
     m_session_log_messages.clear();
-    m_log_target = new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode);
-    asr::global_logger().add_target(m_log_target);
+    create_log_window();
 
     // Collect the entities we're interested in.
     if (progress_cb)
@@ -530,11 +528,7 @@ void AppleseedRenderer::Close(
     // Call RenderEnd() on all object instances.
     render_end(m_entities.m_objects, m_time);
 
-    // Create logtarget dialog
-    asr::global_logger().remove_target(m_log_target);
-    if (m_log_target)
-        delete m_log_target;
-    m_log_target = nullptr;
+    asr::global_logger().remove_target(m_log_target.get());
 
     clear();
 }
@@ -637,6 +631,19 @@ int AppleseedRenderer::AcceptTab(
         return 0;
 
     return TAB_DIALOG_ADD_TAB;
+}
+
+void AppleseedRenderer::open_log_window()
+{
+    if (m_log_target != nullptr)
+        m_log_target->show_saved_messages();
+}
+
+void AppleseedRenderer::create_log_window()
+{
+    // Create logtarget dialog
+    m_log_target.reset(new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode));
+    asr::global_logger().add_target(m_log_target.get());
 }
 
 void AppleseedRenderer::clear()

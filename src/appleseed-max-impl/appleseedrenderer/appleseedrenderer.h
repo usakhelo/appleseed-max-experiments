@@ -45,13 +45,13 @@
 
 // Standard headers.
 #include <vector>
+#include <memory>
 
 // Windows headers.
 #include <tchar.h>
 
 // Forward declarations.
 class AppleseedInteractiveRender;
-class WindowLogTarget;
 
 class AppleseedRenderer
   : public Renderer
@@ -142,19 +142,21 @@ class AppleseedRenderer
     virtual int AcceptTab(
         ITabDialogPluginTab*    tab) override;
 
-    WindowLogTarget*            m_log_target;
-    std::vector<Message_Pair>   m_session_log_messages;
+    void open_log_window();
+    void create_log_window();
 
   private:
-    AppleseedInteractiveRender* m_interactive_renderer;
-    RendererSettings            m_settings;
-    INode*                      m_scene;
-    INode*                      m_view_node;
-    ViewParams                  m_view_params;
-    RendParams                  m_rend_params;
-    std::vector<DefaultLight>   m_default_lights;
-    TimeValue                   m_time;
-    MaxSceneEntities            m_entities;
+    AppleseedInteractiveRender*         m_interactive_renderer;
+    RendererSettings                    m_settings;
+    INode*                              m_scene;
+    INode*                              m_view_node;
+    ViewParams                          m_view_params;
+    RendParams                          m_rend_params;
+    std::vector<DefaultLight>           m_default_lights;
+    TimeValue                           m_time;
+    MaxSceneEntities                    m_entities;
+    std::unique_ptr<WindowLogTarget>    m_log_target;
+    std::vector<Message_Pair>           m_session_log_messages;
 
     void clear();
 };

@@ -34,7 +34,6 @@
 #include "appleseedrenderer/renderersettings.h"
 #include "appleseedrenderer/resource.h"
 #include "appleseedrenderer/updatechecker.h"
-#include "logwindow.h"
 #include "main.h"
 #include "utilities.h"
 #include "version.h"
@@ -746,9 +745,7 @@ namespace
                     return TRUE;
 
                   case IDC_BUTTON_LOG:
-                    if (m_renderer->m_log_target == nullptr)
-                        m_renderer->m_log_target = new WindowLogTarget(&m_renderer->m_session_log_messages, m_settings.m_log_open_mode); //should consider combobox setting
-                    m_renderer->m_log_target->fill_log_window();
+                    m_renderer->open_log_window();
                     return TRUE;
 
                   default:

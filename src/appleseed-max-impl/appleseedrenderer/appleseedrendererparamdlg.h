@@ -39,7 +39,6 @@
 
 // Forward declarations.
 class RendererSettings;
-class WindowLogTarget;
 class AppleseedRenderer;
 
 class AppleseedRendererParamDlg

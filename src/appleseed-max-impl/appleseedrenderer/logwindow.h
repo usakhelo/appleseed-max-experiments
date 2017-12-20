@@ -16,7 +16,6 @@ enum class LogOpenMode
 {
     Always,
     Never,
-    Warnings,
     Errors
 };
 
@@ -38,9 +37,9 @@ public:
         const char*                             message) override;
 
     void open_log_window();
-    void fill_log_window();
+    void show_saved_messages();
 
 private:
-    std::vector<Message_Pair>*      m_message_store;
+    std::vector<Message_Pair>*      m_saved_messages;
     LogOpenMode                     m_open_mode;
 };
