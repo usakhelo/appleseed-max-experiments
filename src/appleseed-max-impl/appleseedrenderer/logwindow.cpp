@@ -17,10 +17,12 @@
 
 // 3ds Max headers.
 #include <3dsmaxdlport.h>
-#include <log.h>
 #include <max.h>
 
+#include <Richedit.h>
+
 namespace asf = foundation;
+namespace asr = renderer;
 
 namespace
 {
@@ -44,11 +46,10 @@ namespace
         //// restore the previous selection
         //SendMessage(edit_box, EM_SETSEL, start_pos, end_pos);
 
-        DWORD start_pos, end_pos;
-        SendMessage(edit_box, EM_GETSEL, reinterpret_cast<WPARAM>(&start_pos), reinterpret_cast<LPARAM>(&end_pos));
-        LRESULT line_index = SendMessage(edit_box, EM_LINEFROMCHAR, end_pos, NULL);
+        POINT scroll_pos;
+        LRESULT line_index = SendMessage(edit_box, EM_GETSCROLLPOS, NULL, reinterpret_cast<LPARAM>(&scroll_pos));
         
-        SendMessage(edit_box, EM_LINESCROLL, -10, 0 /*(LPARAM)line_index*/);
+        SendMessage(edit_box, EM_LINESCROLL, -1, 0);
     }
 
     static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -82,8 +83,6 @@ namespace
                   HIWORD(lparam),
                   true);
 
-              int outLength = GetWindowTextLength(edit_box);
-              LRESULT line_index = SendMessage(edit_box, EM_LINEFROMCHAR, outLength, NULL);
               SendMessage(edit_box, EM_LINESCROLL, 0, 1);
               return TRUE;
           }
@@ -132,10 +131,12 @@ WindowLogTarget::WindowLogTarget(
     : m_saved_messages(messages)
     , m_open_mode(open_mode)
 {
+    asr::global_logger().add_target(this);
 }
 
 void WindowLogTarget::release()
 {
+    asr::global_logger().remove_target(this);
     delete this;
 }
 

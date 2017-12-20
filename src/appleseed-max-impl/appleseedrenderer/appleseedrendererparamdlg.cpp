@@ -716,8 +716,8 @@ namespace
             m_spinner_renderingthreads->SetResetValue(RendererSettings::defaults().m_rendering_threads);
             m_spinner_renderingthreads->SetValue(m_settings.m_rendering_threads, FALSE);
 
-            const wchar_t* log_combo_items[] = { L"Always", L"Never", L"On Warning", L"On Error" };
-            for (int i = 0; i < 4; i++)
+            const wchar_t* log_combo_items[] = { L"Always", L"Never", L"On Error" };
+            for (int i = 0; i < 3; i++)
                 SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_ADDSTRING, 0, (LPARAM)(LPCTSTR)log_combo_items[i]);
             SendMessage(GetDlgItem(hwnd, IDC_COMBO_LOG), CB_SETCURSEL, static_cast<int>(m_settings.m_log_open_mode), 0);
 

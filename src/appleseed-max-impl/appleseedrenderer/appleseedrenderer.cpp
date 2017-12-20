@@ -438,7 +438,6 @@ int AppleseedRenderer::Render(
         renderer_settings.m_background_emits_light = false;
     }
 
-    m_session_log_messages.clear();
     create_log_window();
 
     // Collect the entities we're interested in.
@@ -527,8 +526,6 @@ void AppleseedRenderer::Close(
 {
     // Call RenderEnd() on all object instances.
     render_end(m_entities.m_objects, m_time);
-
-    asr::global_logger().remove_target(m_log_target.get());
 
     clear();
 }
@@ -641,9 +638,10 @@ void AppleseedRenderer::open_log_window()
 
 void AppleseedRenderer::create_log_window()
 {
-    // Create logtarget dialog
-    m_log_target.reset(new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode));
-    asr::global_logger().add_target(m_log_target.get());
+    m_session_log_messages.clear();
+
+    if (m_log_target == nullptr)
+        m_log_target.reset(new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode));
 }
 
 void AppleseedRenderer::clear()
