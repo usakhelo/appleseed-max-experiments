@@ -40,6 +40,11 @@ namespace
         int outLength = GetWindowTextLength(edit_box);
         SendMessage(edit_box, EM_SETSEL, outLength, outLength);
 
+        CHARFORMAT2 char_format;
+        SendMessage(edit_box, EM_GETCHARFORMAT, SCF_DEFAULT, reinterpret_cast<LPARAM>(&char_format));
+        char_format.crTextColor = RGB(0, 255, 0);
+        SendMessage(edit_box, EM_SETCHARFORMAT, SCF_ALL /*SCF_SELECTION*/, reinterpret_cast<LPARAM>(&char_format));
+
         // insert the text at the new caret position
         SendMessage(edit_box, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(text));
 
@@ -49,11 +54,13 @@ namespace
         POINT scroll_pos;
         LRESULT line_index = SendMessage(edit_box, EM_GETSCROLLPOS, NULL, reinterpret_cast<LPARAM>(&scroll_pos));
         
-        SendMessage(edit_box, EM_LINESCROLL, -1, 0);
+        //SendMessage(edit_box, EM_LINESCROLL, -1, 0);
     }
 
     static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
+        static int v_scroll_pos;
+        static SCROLLINFO si;
         switch (msg)
         {
           case WM_INITDIALOG:
@@ -72,6 +79,23 @@ namespace
             }
             break;
           
+          case WM_COMMAND:
+            switch (LOWORD(wparam))
+            {
+              case IDC_EDIT_LOG:
+              {
+                  if (HIWORD(wparam) == SBM_SETPOS)
+                  {
+                        ZeroMemory(&si, sizeof(si));
+                        si.cbSize = sizeof(si);
+                        si.fMask = SIF_POS | SIF_RANGE;
+                        GetScrollInfo(HWND(lparam), SB_VERT, &si);
+                        v_scroll_pos = HIWORD(wparam);
+                  }
+                }
+            }
+            break;
+
           case WM_SIZE:
           {
               HWND edit_box = GetDlgItem(hwnd, IDC_EDIT_LOG);
@@ -83,7 +107,14 @@ namespace
                   HIWORD(lparam),
                   true);
 
-              SendMessage(edit_box, EM_LINESCROLL, 0, 1);
+              int outLength = GetWindowTextLength(edit_box);
+              POINTL char_pos;
+              SendMessage(edit_box, EM_POSFROMCHAR, reinterpret_cast<WPARAM>(&char_pos), outLength);
+              
+              POINT scroll_pos;
+              scroll_pos.x = 0;
+              scroll_pos.y = char_pos.y - HIWORD(lparam);
+              SendMessage(edit_box, EM_SETSCROLLPOS, NULL, reinterpret_cast<LPARAM>(&scroll_pos));
               return TRUE;
           }
               break;
