@@ -30,37 +30,25 @@ namespace
     std::vector<Message_Pair>   g_message_queue;
     HWND                        g_log_window = 0;
 
-    void append_text(HWND edit_box, const wchar_t* text)
+    void append_text(HWND edit_box, const wchar_t* text, COLORREF color)
     {
-        // get the current selection
-        //DWORD start_pos, end_pos;
-        //SendMessage(edit_box, EM_GETSEL, reinterpret_cast<WPARAM>(&start_pos), reinterpret_cast<LPARAM>(&end_pos));
-
-        // move the caret to the end of the text
         int outLength = GetWindowTextLength(edit_box);
         SendMessage(edit_box, EM_SETSEL, outLength, outLength);
 
-        CHARFORMAT2 char_format;
-        SendMessage(edit_box, EM_GETCHARFORMAT, SCF_DEFAULT, reinterpret_cast<LPARAM>(&char_format));
-        char_format.crTextColor = RGB(0, 255, 0);
-        SendMessage(edit_box, EM_SETCHARFORMAT, SCF_ALL /*SCF_SELECTION*/, reinterpret_cast<LPARAM>(&char_format));
+        CHARFORMAT char_format;
+        SendMessage(edit_box, EM_GETCHARFORMAT, SCF_SELECTION, reinterpret_cast<LPARAM>(&char_format));
+        char_format.cbSize = sizeof(char_format);
+        char_format.dwMask = CFM_COLOR;
+        char_format.dwEffects = 0;
+        char_format.crTextColor = color;
+        SendMessage(edit_box, EM_SETCHARFORMAT, SCF_SELECTION, reinterpret_cast<LPARAM>(&char_format));
 
-        // insert the text at the new caret position
         SendMessage(edit_box, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(text));
-
-        //// restore the previous selection
-        //SendMessage(edit_box, EM_SETSEL, start_pos, end_pos);
-
-        POINT scroll_pos;
-        LRESULT line_index = SendMessage(edit_box, EM_GETSCROLLPOS, NULL, reinterpret_cast<LPARAM>(&scroll_pos));
-        
-        //SendMessage(edit_box, EM_LINESCROLL, -1, 0);
+        SendMessage(edit_box, EM_LINESCROLL, 0, 1);
     }
 
     static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
-        static int v_scroll_pos;
-        static SCROLLINFO si;
         switch (msg)
         {
           case WM_INITDIALOG:
@@ -79,23 +67,6 @@ namespace
             }
             break;
           
-          case WM_COMMAND:
-            switch (LOWORD(wparam))
-            {
-              case IDC_EDIT_LOG:
-              {
-                  if (HIWORD(wparam) == SBM_SETPOS)
-                  {
-                        ZeroMemory(&si, sizeof(si));
-                        si.cbSize = sizeof(si);
-                        si.fMask = SIF_POS | SIF_RANGE;
-                        GetScrollInfo(HWND(lparam), SB_VERT, &si);
-                        v_scroll_pos = HIWORD(wparam);
-                  }
-                }
-            }
-            break;
-
           case WM_SIZE:
           {
               HWND edit_box = GetDlgItem(hwnd, IDC_EDIT_LOG);
@@ -107,14 +78,7 @@ namespace
                   HIWORD(lparam),
                   true);
 
-              int outLength = GetWindowTextLength(edit_box);
-              POINTL char_pos;
-              SendMessage(edit_box, EM_POSFROMCHAR, reinterpret_cast<WPARAM>(&char_pos), outLength);
-              
-              POINT scroll_pos;
-              scroll_pos.x = 0;
-              scroll_pos.y = char_pos.y - HIWORD(lparam);
-              SendMessage(edit_box, EM_SETSCROLLPOS, NULL, reinterpret_cast<LPARAM>(&scroll_pos));
+              SendMessage(edit_box, EM_LINESCROLL, 0, 1);
               return TRUE;
           }
               break;
@@ -131,7 +95,25 @@ namespace
         {
             if (g_log_window)
             {
-                append_text(GetDlgItem(g_log_window, IDC_EDIT_LOG), utf8_to_wide(line + "\n").c_str());
+                typedef asf::LogMessage::Category message_type;
+                COLORREF message_color;
+                switch (type)
+                {
+                  case message_type::Error:
+                  case message_type::Fatal:
+                    message_color = RGB(220, 10, 10);
+                    break;
+                  case message_type::Warning:
+                    message_color = RGB(220, 100, 10);
+                    break;
+                  case message_type::Debug:
+                    message_color = RGB(10, 150, 10);
+                    break;
+                  default:
+                    message_color = RGB(10, 10, 10);
+                    break;
+                }
+                append_text(GetDlgItem(g_log_window, IDC_EDIT_LOG), utf8_to_wide(line + "\n").c_str(), message_color);
             }
         }
     }
