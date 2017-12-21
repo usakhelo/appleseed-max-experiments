@@ -35,6 +35,7 @@
 
 // appleseed.foundation headers.
 #include "foundation/platform/windows.h"    // include before 3ds Max headers
+#include "foundation/utility/autoreleaseptr.h"
 
 // 3ds Max headers.
 #include <iparamb2.h>
@@ -146,18 +147,17 @@ class AppleseedRenderer
     void create_log_window();
 
   private:
-    AppleseedInteractiveRender*         m_interactive_renderer;
-    RendererSettings                    m_settings;
-    INode*                              m_scene;
-    INode*                              m_view_node;
-    ViewParams                          m_view_params;
-    RendParams                          m_rend_params;
-    std::vector<DefaultLight>           m_default_lights;
-    TimeValue                           m_time;
-    MaxSceneEntities                    m_entities;
-    std::unique_ptr<WindowLogTarget>    m_log_target;
-    std::vector<Message_Pair>           m_session_log_messages;
-
+    AppleseedInteractiveRender*                     m_interactive_renderer;
+    RendererSettings                                m_settings;
+    INode*                                          m_scene;
+    INode*                                          m_view_node;
+    ViewParams                                      m_view_params;
+    RendParams                                      m_rend_params;
+    std::vector<DefaultLight>                       m_default_lights;
+    TimeValue                                       m_time;
+    MaxSceneEntities                                m_entities;
+    foundation::auto_release_ptr<WindowLogTarget>   m_log_target;
+    std::vector<Message_Pair>                       m_session_log_messages;
     void clear();
 };
 

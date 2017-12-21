@@ -747,7 +747,18 @@ namespace
                   case IDC_BUTTON_LOG:
                     m_renderer->open_log_window();
                     return TRUE;
-
+                  
+                  case IDC_COMBO_LOG:
+                      switch (HIWORD(wparam))
+                      {
+                        case CBN_SELCHANGE: 
+                        {
+                            LRESULT sel_mode = SendDlgItemMessage(hwnd, IDC_COMBO_LOG, CB_GETCURSEL, 0, 0);
+                          if (sel_mode != CB_ERR)
+                              m_settings.m_log_open_mode = static_cast<LogOpenMode>((int)sel_mode);
+                        }
+                      }
+                      break;
                   default:
                     return FALSE;
                 }

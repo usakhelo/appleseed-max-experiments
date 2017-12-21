@@ -38,9 +38,10 @@ namespace
         CHARFORMAT char_format;
         SendMessage(edit_box, EM_GETCHARFORMAT, SCF_SELECTION, reinterpret_cast<LPARAM>(&char_format));
         char_format.cbSize = sizeof(char_format);
-        char_format.dwMask = CFM_COLOR;
+        char_format.dwMask = CFM_COLOR | CFM_FACE;
         char_format.dwEffects = 0;
         char_format.crTextColor = color;
+        wcscpy(reinterpret_cast<WCHAR*>(char_format.szFaceName), L"Consolas");
         SendMessage(edit_box, EM_SETCHARFORMAT, SCF_SELECTION, reinterpret_cast<LPARAM>(&char_format));
 
         SendMessage(edit_box, EM_REPLACESEL, TRUE, reinterpret_cast<LPARAM>(text));
@@ -144,6 +145,7 @@ WindowLogTarget::WindowLogTarget(
     : m_saved_messages(messages)
     , m_open_mode(open_mode)
 {
+    g_message_queue.clear();
     asr::global_logger().add_target(this);
 }
 
@@ -168,25 +170,34 @@ void WindowLogTarget::write(
 
     push_message(Message_Pair(category, lines));
 
-    switch (category)
+    if (g_log_window)
+        open_log_window();
+    else
     {
-      case asf::LogMessage::Category::Error:
-      case asf::LogMessage::Category::Fatal:
-      case asf::LogMessage::Category::Warning:
-        if (m_open_mode != LogOpenMode::Never)
-            open_log_window();
-        break;
-      case asf::LogMessage::Category::Info:
-          if (m_open_mode == LogOpenMode::Always)
-            open_log_window();
-        break;
+        switch (category)
+        {
+        case asf::LogMessage::Category::Error:
+        case asf::LogMessage::Category::Fatal:
+        case asf::LogMessage::Category::Warning:
+            if (m_open_mode != LogOpenMode::Never)
+                open_log_window();
+            break;
+        case asf::LogMessage::Category::Info:
+            if (m_open_mode == LogOpenMode::Always)
+                open_log_window();
+            break;
+        }
     }
 }
 
 void WindowLogTarget::show_saved_messages()
 {
+    if (g_log_window)
+        return;
+
     if (m_saved_messages != nullptr)
     {
+        g_message_queue.clear();
         for (const auto& message : *m_saved_messages)
             g_message_queue.push_back(message);
 
