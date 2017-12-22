@@ -68,7 +68,7 @@ namespace
             m_low_priority_mode = true;
             m_use_max_procedural_maps = false;
 
-            m_log_open_mode = LogOpenMode::Always;
+            m_log_open_mode = LogDialogMode::Always;
         }
     };
 }

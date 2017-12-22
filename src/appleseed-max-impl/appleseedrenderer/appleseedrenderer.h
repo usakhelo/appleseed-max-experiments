@@ -157,7 +157,7 @@ class AppleseedRenderer
     TimeValue                                       m_time;
     MaxSceneEntities                                m_entities;
     foundation::auto_release_ptr<WindowLogTarget>   m_log_target;
-    std::vector<Message_Pair>                       m_session_log_messages;
+
     void clear();
 };
 

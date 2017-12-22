@@ -632,14 +632,15 @@ int AppleseedRenderer::AcceptTab(
 
 void AppleseedRenderer::open_log_window()
 {
-    if (m_log_target.get() != nullptr)
-        m_log_target->show_saved_messages();
+    if (m_log_target.get() == nullptr)
+        create_log_window();
+
+    m_log_target->show_last_session_messages();
 }
 
 void AppleseedRenderer::create_log_window()
 {
-    m_session_log_messages.clear();
-    m_log_target.reset(new WindowLogTarget(&m_session_log_messages, m_settings.m_log_open_mode));
+    m_log_target.reset(new WindowLogTarget(m_settings.m_log_open_mode));
 }
 
 void AppleseedRenderer::clear()

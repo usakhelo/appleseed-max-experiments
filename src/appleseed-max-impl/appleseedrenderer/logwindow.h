@@ -10,9 +10,10 @@
 #include <vector>
 
 typedef std::vector<std::string> StringVec;
-typedef std::pair<foundation::LogMessage::Category, StringVec> Message_Pair;
+typedef foundation::LogMessage::Category MessageType;
+typedef std::pair<MessageType, StringVec> MessagePair;
 
-enum class LogOpenMode
+enum class LogDialogMode
 {
     Always,
     Never,
@@ -23,23 +24,21 @@ class WindowLogTarget
     : public foundation::ILogTarget
 {
 public:
-    WindowLogTarget(
-        std::vector<Message_Pair>*  session_messages,
-        LogOpenMode                 open_mode);
+    WindowLogTarget(LogDialogMode   open_mode);
 
     virtual void release() override;
 
     virtual void write(
-        const foundation::LogMessage::Category  category,
-        const char*                             file,
-        const size_t                            line,
-        const char*                             header,
-        const char*                             message) override;
+        const MessageType           category,
+        const char*                 file,
+        const size_t                line,
+        const char*                 header,
+        const char*                 message) override;
 
-    void open_log_window();
-    void show_saved_messages();
+    void print_to_window();
+    void show_last_session_messages();
 
 private:
-    std::vector<Message_Pair>*      m_saved_messages;
-    LogOpenMode                     m_open_mode;
+    std::vector<MessagePair>        m_session_messages;
+    LogDialogMode                   m_log_mode;
 };
