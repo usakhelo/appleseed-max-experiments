@@ -71,7 +71,7 @@ namespace
 
     void append_text(HWND edit_box, const wchar_t* text, COLORREF color)
     {
-        int text_length = GetWindowTextLength(edit_box);
+        const int text_length = GetWindowTextLength(edit_box);
         SendMessage(edit_box, EM_SETSEL, text_length, text_length);
 
         CHARFORMAT char_format;
@@ -160,7 +160,7 @@ namespace
 }
 
 WindowLogTarget::WindowLogTarget(LogDialogMode open_mode)
-    : m_log_mode(open_mode)
+  : m_log_mode(open_mode)
 {
     m_session_messages.clear();
     g_message_queue.clear();
@@ -199,6 +199,7 @@ void WindowLogTarget::write(
             if (m_log_mode != LogDialogMode::Never)
                 print_to_window();
             break;
+          case asf::LogMessage::Category::Debug:
           case asf::LogMessage::Category::Info:
             if (m_log_mode == LogDialogMode::Always)
                 print_to_window();

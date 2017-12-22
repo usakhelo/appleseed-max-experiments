@@ -686,7 +686,7 @@ namespace
         SystemPanel(
             IRendParams*        rend_params,
             RendererSettings&   settings,
-            AppleseedRenderer*    renderer)
+            AppleseedRenderer*  renderer)
           : m_rend_params(rend_params)
           , m_settings(settings)
           , m_renderer(renderer)
@@ -749,14 +749,11 @@ namespace
                     return TRUE;
                   
                   case IDC_COMBO_LOG:
-                    switch (HIWORD(wparam))
+                    if (HIWORD(wparam) == CBN_SELCHANGE)
                     {
-                      case CBN_SELCHANGE: 
-                        {
-                            LRESULT sel_mode = SendDlgItemMessage(hwnd, IDC_COMBO_LOG, CB_GETCURSEL, 0, 0);
-                            if (sel_mode != CB_ERR)
-                                m_settings.m_log_open_mode = static_cast<LogDialogMode>((int)sel_mode);
-                        }
+                        LRESULT sel_mode = SendDlgItemMessage(hwnd, IDC_COMBO_LOG, CB_GETCURSEL, 0, 0);
+                        if (sel_mode != CB_ERR)
+                            m_settings.m_log_open_mode = static_cast<LogDialogMode>((int)sel_mode);
                     }
                     break;
                   
