@@ -323,6 +323,8 @@ void AppleseedInteractiveRender::BeginSession()
     RendererSettings renderer_settings = appleseed_renderer->get_renderer_settings();
     renderer_settings.m_output_mode = RendererSettings::OutputMode::RenderOnly;
     
+    appleseed_renderer->create_log_window();
+
     m_project = prepare_project(renderer_settings, view_params, m_time);
 
     m_render_session.reset(new InteractiveSession(
