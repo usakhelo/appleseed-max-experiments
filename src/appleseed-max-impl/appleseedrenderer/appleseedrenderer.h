@@ -156,7 +156,6 @@ class AppleseedRenderer
     std::vector<DefaultLight>                       m_default_lights;
     TimeValue                                       m_time;
     MaxSceneEntities                                m_entities;
-    foundation::auto_release_ptr<WindowLogTarget>   m_log_target;
 
     void clear();
 };

@@ -73,6 +73,7 @@ namespace
 }
 
 AppleseedRendererClassDesc g_appleseed_renderer_classdesc;
+asf::auto_release_ptr<WindowLogTarget> g_log_window;
 
 
 //
@@ -632,15 +633,15 @@ int AppleseedRenderer::AcceptTab(
 
 void AppleseedRenderer::open_log_window()
 {
-    if (m_log_target.get() == nullptr)
+    if (g_log_window.get() == nullptr)
         create_log_window();
 
-    m_log_target->show_last_session_messages();
+    g_log_window->show_last_session_messages();
 }
 
 void AppleseedRenderer::create_log_window()
 {
-    m_log_target.reset(new WindowLogTarget(m_settings.m_log_open_mode));
+    g_log_window.reset(new WindowLogTarget(m_settings.m_log_open_mode));
 }
 
 void AppleseedRenderer::clear()
