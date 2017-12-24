@@ -29,7 +29,7 @@
 #pragma once
 
 // appleseed-max headers.
-#include "logwindow.h"
+#include "dialoglogtarget.h"
 
 // appleseed.foundation headers.
 #include "foundation/platform/windows.h"    // include before 3ds Max headers
@@ -94,7 +94,8 @@ class RendererSettings
     int             m_rendering_threads;
     bool            m_low_priority_mode;
     bool            m_use_max_procedural_maps;
-    LogDialogMode   m_log_open_mode;
+    bool            m_log_in_material_editor;
+    DialogLogMode   m_log_open_mode;
 
     // Apply these settings to a given project.
     void apply(renderer::Project& project) const;

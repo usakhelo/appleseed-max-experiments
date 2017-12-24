@@ -73,7 +73,7 @@ namespace
 }
 
 AppleseedRendererClassDesc g_appleseed_renderer_classdesc;
-asf::auto_release_ptr<WindowLogTarget> g_log_window;
+asf::auto_release_ptr<DialogLogTarget> g_dialog_log_target;
 
 
 //
@@ -439,7 +439,8 @@ int AppleseedRenderer::Render(
         renderer_settings.m_background_emits_light = false;
     }
 
-    create_log_window();
+    if (!m_rend_params.inMtlEdit || m_settings.m_log_in_material_editor)
+        create_log_window();
 
     // Collect the entities we're interested in.
     if (progress_cb)
@@ -631,17 +632,17 @@ int AppleseedRenderer::AcceptTab(
     return TAB_DIALOG_ADD_TAB;
 }
 
-void AppleseedRenderer::open_log_window()
+void AppleseedRenderer::show_last_session_log()
 {
-    if (g_log_window.get() == nullptr)
+    if (g_dialog_log_target.get() == nullptr)
         create_log_window();
 
-    g_log_window->show_last_session_messages();
+    g_dialog_log_target->show_last_session_messages();
 }
 
 void AppleseedRenderer::create_log_window()
 {
-    g_log_window.reset(new WindowLogTarget(m_settings.m_log_open_mode));
+    g_dialog_log_target.reset(new DialogLogTarget(m_settings.m_log_open_mode));
 }
 
 void AppleseedRenderer::clear()

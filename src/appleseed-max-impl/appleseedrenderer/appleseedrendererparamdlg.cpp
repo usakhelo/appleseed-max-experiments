@@ -723,6 +723,7 @@ namespace
 
             CheckDlgButton(hwnd, IDC_CHECK_LOW_PRIORITY_MODE, m_settings.m_low_priority_mode ? BST_CHECKED : BST_UNCHECKED);
             CheckDlgButton(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS, m_settings.m_use_max_procedural_maps ? BST_CHECKED : BST_UNCHECKED);
+            CheckDlgButton(hwnd, IDC_CHECK_LOG_MATERIAL_EDITOR, m_settings.m_log_in_material_editor ? BST_CHECKED : BST_UNCHECKED);
         }
 
         virtual INT_PTR CALLBACK dialog_proc(
@@ -744,8 +745,12 @@ namespace
                     m_settings.m_use_max_procedural_maps = IsDlgButtonChecked(hwnd, IDC_CHECK_USE_MAX_PROCEDURAL_MAPS) == BST_CHECKED;
                     return TRUE;
 
+                  case IDC_CHECK_LOG_MATERIAL_EDITOR:
+                    m_settings.m_log_in_material_editor = IsDlgButtonChecked(hwnd, IDC_CHECK_LOG_MATERIAL_EDITOR) == BST_CHECKED;
+                    return TRUE;
+
                   case IDC_BUTTON_LOG:
-                    m_renderer->open_log_window();
+                    m_renderer->show_last_session_log();
                     return TRUE;
                   
                   case IDC_COMBO_LOG:
@@ -753,7 +758,7 @@ namespace
                     {
                         LRESULT sel_mode = SendDlgItemMessage(hwnd, IDC_COMBO_LOG, CB_GETCURSEL, 0, 0);
                         if (sel_mode != CB_ERR)
-                            m_settings.m_log_open_mode = static_cast<LogDialogMode>((int)sel_mode);
+                            m_settings.m_log_open_mode = static_cast<DialogLogMode>((int)sel_mode);
                     }
                     break;
                   

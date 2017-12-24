@@ -1,6 +1,33 @@
 
+//
+// This source file is part of appleseed.
+// Visit http://appleseedhq.net/ for additional information and resources.
+//
+// This software is released under the MIT license.
+//
+// Copyright (c) 2017 Sergo Pogosyan, The appleseedhq Organization
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
+
 // Interface header.
-#include "logwindow.h"
+#include "dialoglogtarget.h"
 
 // appleseed-max headers.
 #include "appleseedrenderer/resource.h"
@@ -16,7 +43,6 @@
 #include "boost/thread/mutex.hpp"
 
 // 3ds Max headers.
-#include <3dsmaxdlport.h>
 #include <max.h>
 
 // Standard headers.
@@ -29,39 +55,39 @@ namespace
 {
     boost::mutex                g_message_queue_mutex;
     std::vector<MessagePair>    g_message_queue;
-    HWND                        g_log_window = 0;
+    HWND                        g_log_dialog = 0;
 
     static INT_PTR CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
+        static int prev_height;
+
         switch (msg)
         {
           case WM_INITDIALOG:
             break;
           case WM_CLOSE:
           case WM_DESTROY:
-            if (g_log_window != 0)
+            if (g_log_dialog != 0)
             {
-                GetCOREInterface14()->UnRegisterModelessRenderWindow(g_log_window);
-                g_log_window = 0;
+                GetCOREInterface14()->UnRegisterModelessRenderWindow(g_log_dialog);
+                g_log_dialog = 0;
                 DestroyWindow(hwnd);
             }
             break;
           
           case WM_SIZE:
           {
-              HWND edit_box = GetDlgItem(hwnd, IDC_EDIT_LOG);
-              MoveWindow(
-                  edit_box,
-                  0,
-                  0,
-                  LOWORD(lparam),
-                  HIWORD(lparam),
-                  true);
-
-              SendMessage(edit_box, EM_LINESCROLL, 0, 1);
-              return TRUE;
+            HWND edit_box = GetDlgItem(hwnd, IDC_EDIT_LOG);
+            MoveWindow(
+                edit_box,
+                0,
+                0,
+                LOWORD(lparam),
+                HIWORD(lparam),
+                true);
+            return TRUE;
           }
-              break;
+            break;
 
           default:
             return FALSE;
@@ -84,14 +110,15 @@ namespace
         SendMessage(edit_box, EM_SETCHARFORMAT, SCF_SELECTION, reinterpret_cast<LPARAM>(&char_format));
 
         SendMessage(edit_box, EM_REPLACESEL, FALSE, reinterpret_cast<LPARAM>(text));
-        SendMessage(edit_box, EM_SCROLLCARET, 0, 0);
+        SendMessage(edit_box, EM_LINESCROLL, 0, 1);
+        //SendMessage(edit_box, EM_SCROLLCARET, 0, 0);
     }
 
     void print_message(const MessageType type, const StringVec& lines)
     {
         for (const auto& line : lines)
         {
-            if (g_log_window)
+            if (g_log_dialog)
             {
                 COLORREF message_color;
                 switch (type)
@@ -110,7 +137,7 @@ namespace
                     message_color = RGB(10, 10, 10);
                     break;
                 }
-                append_text(GetDlgItem(g_log_window, IDC_EDIT_LOG), utf8_to_wide(line + "\n").c_str(), message_color);
+                append_text(GetDlgItem(g_log_dialog, IDC_EDIT_LOG), utf8_to_wide(line + "\n").c_str(), message_color);
             }
         }
     }
@@ -124,19 +151,19 @@ namespace
     // Runs in UI thread.
     void emit_pending_messages()
     {
-        if (!g_log_window)
+        if (!g_log_dialog)
         {
-            g_log_window = CreateDialogParam(
+            g_log_dialog = CreateDialogParam(
                 g_module,
                 MAKEINTRESOURCE(IDD_DIALOG_LOG),
                 GetCOREInterface()->GetMAXHWnd(),
                 dialog_proc,
                 NULL);
 
-            GetCOREInterface14()->RegisterModelessRenderWindow(g_log_window);
+            GetCOREInterface14()->RegisterModelessRenderWindow(g_log_dialog);
         }
 
-        if (g_log_window != NULL)
+        if (g_log_dialog != NULL)
         {
             boost::mutex::scoped_lock lock(g_message_queue_mutex);
 
@@ -150,8 +177,8 @@ namespace
     // Runs in UI thread.
     void emit_saved_messages()
     {
-        if (g_log_window)
-            SetDlgItemText(g_log_window, IDC_EDIT_LOG, L"");
+        if (g_log_dialog)
+            SetDlgItemText(g_log_dialog, IDC_EDIT_LOG, L"");
 
         emit_pending_messages();
     }
@@ -159,7 +186,7 @@ namespace
     const UINT WM_TRIGGER_CALLBACK = WM_USER + 4764;
 }
 
-WindowLogTarget::WindowLogTarget(LogDialogMode open_mode)
+DialogLogTarget::DialogLogTarget(DialogLogMode open_mode)
   : m_log_mode(open_mode)
 {
     m_session_messages.clear();
@@ -167,13 +194,13 @@ WindowLogTarget::WindowLogTarget(LogDialogMode open_mode)
     asr::global_logger().add_target(this);
 }
 
-void WindowLogTarget::release()
+void DialogLogTarget::release()
 {
     asr::global_logger().remove_target(this);
     delete this;
 }
 
-void WindowLogTarget::write(
+void DialogLogTarget::write(
     const MessageType       category,
     const char*             file,
     const size_t            line,
@@ -187,8 +214,8 @@ void WindowLogTarget::write(
 
     push_message(MessagePair(category, lines));
 
-    if (g_log_window)
-        print_to_window();
+    if (g_log_dialog)
+        print_to_dialog();
     else
     {
         switch (category)
@@ -196,21 +223,21 @@ void WindowLogTarget::write(
           case asf::LogMessage::Category::Error:
           case asf::LogMessage::Category::Fatal:
           case asf::LogMessage::Category::Warning:
-            if (m_log_mode != LogDialogMode::Never)
-                print_to_window();
+            if (m_log_mode != DialogLogMode::Never)
+                print_to_dialog();
             break;
           case asf::LogMessage::Category::Debug:
           case asf::LogMessage::Category::Info:
-            if (m_log_mode == LogDialogMode::Always)
-                print_to_window();
+            if (m_log_mode == DialogLogMode::Always)
+                print_to_dialog();
             break;
         }
     }
 }
 
-void WindowLogTarget::show_last_session_messages()
+void DialogLogTarget::show_last_session_messages()
 {
-    if (g_log_window)
+    if (g_log_dialog)
         return;
 
     boost::mutex::scoped_lock lock(g_message_queue_mutex);
@@ -225,7 +252,7 @@ void WindowLogTarget::show_last_session_messages()
         0);
 }
 
-void WindowLogTarget::print_to_window()
+void DialogLogTarget::print_to_dialog()
 {
     PostMessage(
         GetCOREInterface()->GetMAXHWnd(),

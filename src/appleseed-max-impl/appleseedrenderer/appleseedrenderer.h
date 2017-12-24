@@ -29,9 +29,9 @@
 #pragma once
 
 // appleseed-max headers.
+#include "appleseedrenderer/dialoglogtarget.h"
 #include "appleseedrenderer/maxsceneentities.h"
 #include "appleseedrenderer/renderersettings.h"
-#include "logwindow.h"
 
 // appleseed.foundation headers.
 #include "foundation/platform/windows.h"    // include before 3ds Max headers
@@ -143,7 +143,7 @@ class AppleseedRenderer
     virtual int AcceptTab(
         ITabDialogPluginTab*    tab) override;
 
-    void open_log_window();
+    void show_last_session_log();
     void create_log_window();
 
   private:

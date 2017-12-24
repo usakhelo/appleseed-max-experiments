@@ -46,6 +46,7 @@
 #define IDC_SPINNER_RENDERINGTHREADS                502
 #define IDC_CHECK_LOW_PRIORITY_MODE                 503
 #define IDC_CHECK_USE_MAX_PROCEDURAL_MAPS           504
+#define IDC_CHECK_LOG_MATERIAL_EDITOR               505
 
 #define IDD_DIALOG_LOG                              600
 #define IDC_COMBO_LOG                               601
