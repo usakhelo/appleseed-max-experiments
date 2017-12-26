@@ -747,6 +747,7 @@ namespace
 
                   case IDC_CHECK_LOG_MATERIAL_EDITOR:
                     m_settings.m_log_in_material_editor = IsDlgButtonChecked(hwnd, IDC_CHECK_LOG_MATERIAL_EDITOR) == BST_CHECKED;
+                    save_system_setting(m_settings.m_log_in_material_editor, L"LogMaterialEditor");
                     return TRUE;
 
                   case IDC_BUTTON_LOG:
@@ -758,7 +759,10 @@ namespace
                     {
                         LRESULT sel_mode = SendDlgItemMessage(hwnd, IDC_COMBO_LOG, CB_GETCURSEL, 0, 0);
                         if (sel_mode != CB_ERR)
+                        {
                             m_settings.m_log_open_mode = static_cast<DialogLogMode>((int)sel_mode);
+                            save_system_setting(static_cast<int>(m_settings.m_log_open_mode), L"LogOpenMode");
+                        }
                     }
                     break;
                   
