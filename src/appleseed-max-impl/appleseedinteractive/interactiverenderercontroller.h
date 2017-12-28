@@ -31,6 +31,32 @@
 // appleseed.renderer headers.
 #include "renderer/api/rendering.h"
 
+// appleseed-max headers.
+#include "appleseedinteractive/appleseedinteractive.h"
+
+// Standard headers.
+#include <memory>
+
+class INode;
+
+class CameraUpdater
+{
+  public:
+    CameraUpdater(AppleseedInteractiveRender* renderer, INode* camera)
+        : m_renderer(renderer)
+        , m_camera(camera)
+    {}
+
+    void update()
+    {
+        m_renderer->update_camera_parameters(m_camera);
+    }
+
+  private:
+    AppleseedInteractiveRender* m_renderer;
+    INode* m_camera;
+};
+
 class InteractiveRendererController
   : public renderer::DefaultRendererController
 {
@@ -42,6 +68,9 @@ class InteractiveRendererController
 
     void set_status(const Status status);
 
+    void schedule_udpate(std::unique_ptr<CameraUpdater> updater);
+
   private:
+    std::unique_ptr<CameraUpdater> m_updater;
     Status m_status;
 };

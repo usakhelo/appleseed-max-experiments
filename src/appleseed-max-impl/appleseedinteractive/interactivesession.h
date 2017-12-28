@@ -34,6 +34,7 @@
 // Standard headers.
 #include <memory>
 #include <thread>
+#include <functional>
 
 // Forward declarations.
 namespace renderer { class Project; }
@@ -54,6 +55,8 @@ class InteractiveSession
     void abort_render();
     void reininitialize_render();
     void end_render();
+
+    InteractiveRendererController* get_render_controller();
 
   private:
     void render_thread();

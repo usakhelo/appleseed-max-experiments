@@ -41,6 +41,8 @@ InteractiveRendererController::InteractiveRendererController()
 
 void InteractiveRendererController::on_rendering_begin()
 {
+    if (m_updater != nullptr)
+        m_updater->update();
     m_status = ContinueRendering;
 }
 
@@ -52,4 +54,9 @@ asr::IRendererController::Status InteractiveRendererController::get_status() con
 void InteractiveRendererController::set_status(const Status status)
 {
     m_status = status;
+}
+
+void InteractiveRendererController::schedule_udpate(std::unique_ptr<CameraUpdater> updater)
+{
+    m_updater.swap(updater);
 }

@@ -43,6 +43,7 @@
 
 // Standard headers.
 #include <clocale>
+#include <functional>
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -217,7 +218,9 @@ namespace
             {
                 if (NodeEventNamespace::GetNodeByKey(nodes[i]) == m_active_camera)
                 {
-                    m_renderer->update_camera_parameters(m_active_camera);
+                    m_renderer->get_render_session()->get_render_controller()->
+                        schedule_udpate(
+                            std::unique_ptr<CameraUpdater>(new CameraUpdater(m_renderer, m_active_camera)));
                     m_renderer->get_render_session()->reininitialize_render();
                     break;
                 }
@@ -310,17 +313,9 @@ void AppleseedInteractiveRender::update_camera_parameters(INode* camera)
     ViewParams view_params;
     get_view_params_from_view_node(view_params, camera, m_time);
 
-    asr::ParamArray& params = m_project->get_scene()->get_active_camera()->get_parameters();
-    params.insert("horizontal_fov", asf::rad_to_deg(view_params.fov));
-
-#if MAX_RELEASE >= 18000
-    MaxSDK::IPhysicalCamera* phys_camera = dynamic_cast<MaxSDK::IPhysicalCamera*>(camera->EvalWorldState(m_time).obj);
-
-    if (phys_camera && phys_camera->GetDOFEnabled(m_time, FOREVER))
-    {
-        set_camera_dof_params(params, phys_camera, m_bitmap, m_time);
-    }
-#endif
+    auto new_camera = build_camera(camera, view_params, m_bitmap, RendererSettings::defaults(), m_time);
+    m_project->get_scene()->cameras().clear();
+    m_project->get_scene()->cameras().insert(new_camera);
 }
 
 void AppleseedInteractiveRender::update_camera_transform(INode* camera)
