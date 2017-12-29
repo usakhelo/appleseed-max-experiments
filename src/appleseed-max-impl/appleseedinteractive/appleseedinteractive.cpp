@@ -313,7 +313,7 @@ void AppleseedInteractiveRender::update_camera_object(INode* camera)
 
     auto new_camera = build_camera(camera, view_params, m_bitmap, RendererSettings::defaults(), m_time);
     get_render_session()->get_render_controller()->schedule_update(
-        std::unique_ptr<Updater>(new CameraUpdater(new_camera, m_project.ref())));
+        std::unique_ptr<ScheduledAction>(new CameraObjectUpdateAction(m_project.ref(), new_camera)));
 }
 
 void AppleseedInteractiveRender::update_camera_transform(INode* camera)
@@ -321,9 +321,14 @@ void AppleseedInteractiveRender::update_camera_transform(INode* camera)
     ViewParams view_params;
     get_view_params_from_view_node(view_params, camera, m_time);
 
-    m_project->get_scene()->get_active_camera()->transform_sequence().set_transform(
-        static_cast<float>(m_time),
-        asf::Transformd::from_local_to_parent(to_matrix4d(Inverse(view_params.affineTM))));
+    auto transform = asf::Transformd::from_local_to_parent(to_matrix4d(Inverse(view_params.affineTM)));
+    get_render_session()->get_render_controller()->
+        schedule_update(
+            std::unique_ptr<ScheduledAction>(
+                new CameraTransformUpdateAction(
+                    m_project.ref(),
+                    transform,
+                    static_cast<float>(m_time))));
 }
 
 InteractiveSession* AppleseedInteractiveRender::get_render_session()

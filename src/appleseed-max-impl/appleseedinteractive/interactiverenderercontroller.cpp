@@ -60,7 +60,7 @@ void InteractiveRendererController::set_status(const Status status)
     m_status = status;
 }
 
-void InteractiveRendererController::schedule_update(std::unique_ptr<Updater> updater)
+void InteractiveRendererController::schedule_update(std::unique_ptr<ScheduledAction> updater)
 {
     m_scheduled_actions.push_back(std::move(updater));
 }

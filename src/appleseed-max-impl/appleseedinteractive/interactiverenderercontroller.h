@@ -45,31 +45,57 @@
 namespace renderer { class Camera; }
 namespace renderer { class Project; }
 
-class Updater
+class ScheduledAction
 {
   public:
+    virtual ~ScheduledAction() {}
     virtual void update() = 0;
 };
 
-class CameraUpdater : public Updater
+class CameraObjectUpdateAction : public ScheduledAction
 {
   public:
-    explicit CameraUpdater(
-        foundation::auto_release_ptr<renderer::Camera> camera,
-        renderer::Project&       project)
-      : m_entity(camera)
-      , m_project(project)
+    explicit CameraObjectUpdateAction(
+        renderer::Project&                              project,
+        foundation::auto_release_ptr<renderer::Camera>  camera)
+      : m_project(project)
+      , m_camera(camera)
     {}
 
     virtual void update() override
     {
         m_project.get_scene()->cameras().clear();
-        m_project.get_scene()->cameras().insert(m_entity);
+        m_project.get_scene()->cameras().insert(m_camera);
     }
 
   public:
-      foundation::auto_release_ptr<renderer::Camera>    m_entity;
-      renderer::Project&                    m_project;
+      foundation::auto_release_ptr<renderer::Camera>    m_camera;
+      renderer::Project&                                m_project;
+};
+
+class CameraTransformUpdateAction : public ScheduledAction
+{
+public:
+    explicit CameraTransformUpdateAction(
+        renderer::Project&              project,
+        const foundation::Transformd&   transform,
+        const float                     time)
+        : m_project(project)
+        , m_transform(transform)
+        , m_time(time)
+    {}
+
+    virtual void update() override
+    {
+        auto camera = m_project.get_scene()->cameras().get_by_index(0);
+        auto trans = camera->transform_sequence();
+        trans.set_transform(m_time, m_transform);
+    }
+
+public:
+    float                       m_time;
+    foundation::Transformd      m_transform;
+    renderer::Project&          m_project;
 };
 
 class InteractiveRendererController
@@ -83,9 +109,9 @@ class InteractiveRendererController
 
     void set_status(const Status status);
 
-    void schedule_update(std::unique_ptr<Updater> updater);
+    void schedule_update(std::unique_ptr<ScheduledAction> updater);
 
   private:
-    std::vector<std::unique_ptr<Updater>> m_scheduled_actions;
+    std::vector<std::unique_ptr<ScheduledAction>> m_scheduled_actions;
     Status m_status;
 };
