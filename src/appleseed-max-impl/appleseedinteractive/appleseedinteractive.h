@@ -98,7 +98,6 @@ class AppleseedInteractiveRender
 #endif
 
     void update_camera_object(INode* camera);
-    void update_camera_transform(INode* camera);
     InteractiveSession* get_render_session();
 
   private:

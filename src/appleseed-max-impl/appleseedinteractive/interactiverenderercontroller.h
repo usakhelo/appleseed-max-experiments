@@ -73,31 +73,6 @@ class CameraObjectUpdateAction : public ScheduledAction
       renderer::Project&                                m_project;
 };
 
-class CameraTransformUpdateAction : public ScheduledAction
-{
-public:
-    explicit CameraTransformUpdateAction(
-        renderer::Project&              project,
-        const foundation::Transformd&   transform,
-        const float                     time)
-        : m_project(project)
-        , m_transform(transform)
-        , m_time(time)
-    {}
-
-    virtual void update() override
-    {
-        auto camera = m_project.get_scene()->cameras().get_by_index(0);
-        auto trans = camera->transform_sequence();
-        trans.set_transform(m_time, m_transform);
-    }
-
-public:
-    float                       m_time;
-    foundation::Transformd      m_transform;
-    renderer::Project&          m_project;
-};
-
 class InteractiveRendererController
   : public renderer::DefaultRendererController
 {
