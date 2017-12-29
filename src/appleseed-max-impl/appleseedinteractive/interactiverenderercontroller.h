@@ -30,6 +30,11 @@
 
 // appleseed.renderer headers.
 #include "renderer/api/rendering.h"
+#include "renderer/api/project.h"
+#include "renderer/api/scene.h"
+
+// appleseed.foundation headers.
+#include "foundation/utility/autoreleaseptr.h"
 
 // appleseed-max headers.
 #include "appleseedinteractive/appleseedinteractive.h"
@@ -37,24 +42,34 @@
 // Standard headers.
 #include <memory>
 
-class INode;
+namespace renderer { class Camera; }
+namespace renderer { class Project; }
 
-class CameraUpdater
+class Updater
 {
   public:
-    CameraUpdater(AppleseedInteractiveRender* renderer, INode* camera)
-        : m_renderer(renderer)
-        , m_camera(camera)
+    virtual void update() = 0;
+};
+
+class CameraUpdater : public Updater
+{
+  public:
+    explicit CameraUpdater(
+        foundation::auto_release_ptr<renderer::Camera> camera,
+        renderer::Project&       project)
+      : m_entity(camera)
+      , m_project(project)
     {}
 
-    void update()
+    virtual void update() override
     {
-        m_renderer->update_camera_parameters(m_camera);
+        m_project.get_scene()->cameras().clear();
+        m_project.get_scene()->cameras().insert(m_entity);
     }
 
-  private:
-    AppleseedInteractiveRender* m_renderer;
-    INode* m_camera;
+  public:
+      foundation::auto_release_ptr<renderer::Camera>    m_entity;
+      renderer::Project&                    m_project;
 };
 
 class InteractiveRendererController
@@ -68,9 +83,9 @@ class InteractiveRendererController
 
     void set_status(const Status status);
 
-    void schedule_udpate(std::unique_ptr<CameraUpdater> updater);
+    void schedule_update(std::unique_ptr<Updater> updater);
 
   private:
-    std::unique_ptr<CameraUpdater> m_updater;
+    std::vector<std::unique_ptr<Updater>> m_scheduled_actions;
     Status m_status;
 };

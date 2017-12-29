@@ -41,8 +41,12 @@ InteractiveRendererController::InteractiveRendererController()
 
 void InteractiveRendererController::on_rendering_begin()
 {
-    if (m_updater != nullptr)
-        m_updater->update();
+    for (auto& updater : m_scheduled_actions)
+    {
+        updater->update();
+        updater.release();
+    }
+    m_scheduled_actions.clear();
     m_status = ContinueRendering;
 }
 
@@ -56,7 +60,7 @@ void InteractiveRendererController::set_status(const Status status)
     m_status = status;
 }
 
-void InteractiveRendererController::schedule_udpate(std::unique_ptr<CameraUpdater> updater)
+void InteractiveRendererController::schedule_update(std::unique_ptr<Updater> updater)
 {
-    m_updater.swap(updater);
+    m_scheduled_actions.push_back(std::move(updater));
 }

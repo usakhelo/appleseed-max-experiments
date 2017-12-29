@@ -97,7 +97,7 @@ class AppleseedInteractiveRender
     virtual void AbortRender() override;
 #endif
 
-    void update_camera_parameters(INode* camera);
+    void update_camera_object(INode* camera);
     void update_camera_transform(INode* camera);
     InteractiveSession* get_render_session();
 

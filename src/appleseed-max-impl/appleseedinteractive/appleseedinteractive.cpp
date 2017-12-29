@@ -218,9 +218,7 @@ namespace
             {
                 if (NodeEventNamespace::GetNodeByKey(nodes[i]) == m_active_camera)
                 {
-                    m_renderer->get_render_session()->get_render_controller()->
-                        schedule_udpate(
-                            std::unique_ptr<CameraUpdater>(new CameraUpdater(m_renderer, m_active_camera)));
+                    m_renderer->update_camera_object(m_active_camera);
                     m_renderer->get_render_session()->reininitialize_render();
                     break;
                 }
@@ -308,14 +306,14 @@ asf::auto_release_ptr<asr::Project> AppleseedInteractiveRender::prepare_project(
     return project;
 }
 
-void AppleseedInteractiveRender::update_camera_parameters(INode* camera)
+void AppleseedInteractiveRender::update_camera_object(INode* camera)
 {
     ViewParams view_params;
     get_view_params_from_view_node(view_params, camera, m_time);
 
     auto new_camera = build_camera(camera, view_params, m_bitmap, RendererSettings::defaults(), m_time);
-    m_project->get_scene()->cameras().clear();
-    m_project->get_scene()->cameras().insert(new_camera);
+    get_render_session()->get_render_controller()->schedule_update(
+        std::unique_ptr<Updater>(new CameraUpdater(new_camera, m_project.ref())));
 }
 
 void AppleseedInteractiveRender::update_camera_transform(INode* camera)
