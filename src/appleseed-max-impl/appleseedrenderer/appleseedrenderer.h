@@ -54,6 +54,9 @@ class AppleseedInteractiveRender;
 class AppleseedRenderer
   : public Renderer
   , public ITabDialogObject
+#if MAX_RELEASE < 19000
+  , public IRendererRequirements
+#endif
 {
   public:
     static Class_ID get_class_id();
@@ -72,6 +75,8 @@ class AppleseedRenderer
     void* GetInterface(ULONG id) override;
     BaseInterface* GetInterface(Interface_ID id) override;
 
+    bool HasRequirement(Requirement requirement) override;
+
 #if MAX_RELEASE > 18000
 
     bool IsStopSupported() const override;
@@ -80,8 +85,6 @@ class AppleseedRenderer
     PauseSupport IsPauseSupported() const override;
     void PauseRendering() override;
     void ResumeRendering() override;
-
-    bool HasRequirement(Requirement requirement) override;
 
     bool CompatibleWithAnyRenderElement() const override;
     bool CompatibleWithRenderElement(IRenderElement& pIRenderElement) const override;
